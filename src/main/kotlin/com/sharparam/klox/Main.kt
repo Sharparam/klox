@@ -5,9 +5,7 @@ import java.nio.file.Files
 import java.nio.file.Paths
 import kotlin.system.exitProcess
 
-private val LOG = logger("main")
-
-private var hadError = false
+private val LOG by logger("main")
 
 fun main(args: Array<String>) {
     when (args.size) {
@@ -17,13 +15,27 @@ fun main(args: Array<String>) {
     }
 }
 
-fun error(line: Int, message: String) {
-    report(line, "", message)
-}
+val errorHandler = object: ErrorHandler {
+    private val log by logger("errorHandler")
 
-fun report(line: Int, where: String, message: String) {
-    LOG.error("[line {}] Error{}: {}", line, where, message)
-    hadError = true
+    override var hadError: Boolean = false
+
+    override fun scanError(token: Token, message: String) {
+        report(token.line, " in ${token.type}", message)
+    }
+
+    override fun scanError(line: Int, message: String) {
+        report(line, "", message)
+    }
+
+    override fun resetError() {
+        hadError = false
+    }
+
+    private fun report(line: Int, where: String, message: String) {
+        log.error("[line {}] Error{}: {}", line, where, message)
+        hadError = true
+    }
 }
 
 private fun runPrompt() {
@@ -37,7 +49,7 @@ private fun runPrompt() {
             ":exit" -> break@loop
             else -> {
                 run(line)
-                hadError = false
+                errorHandler.resetError()
             }
         }
     }
@@ -48,11 +60,11 @@ private fun runFile(path: String) {
     val bytes = Files.readAllBytes(Paths.get(path))
     run(String(bytes, Charset.defaultCharset()))
 
-    if (hadError)
+    if (errorHandler.hadError)
         exitProcess(65)
 }
 
 private fun run(code: String) {
-    val scanner = Scanner(code)
+    val scanner = Scanner(code, errorHandler)
     scanner.scanTokens().forEach(::println)
 }

@@ -1,6 +1,6 @@
 package com.sharparam.klox
 
-class Scanner(private val source: String) {
+class Scanner(private val source: String, private val errorHandler: ErrorHandler) {
     private val KEYWORDS = hashMapOf(
             "and" to TokenType.AND,
             "class" to TokenType.CLASS,
@@ -79,7 +79,7 @@ class Scanner(private val source: String) {
 
             '\n' -> line++
 
-            else -> error(line, "Unexpected character")
+            else -> errorHandler.scanError(line, "Unexpected character")
         }
     }
 
@@ -110,7 +110,7 @@ class Scanner(private val source: String) {
         }
 
         if (isAtEnd) {
-            error(line, "Unterminated string")
+            errorHandler.scanError(line, "Unterminated string")
             return
         }
 
@@ -151,7 +151,7 @@ class Scanner(private val source: String) {
         }
 
         if (current + 1 >= source.length) {
-            error(line, "Unterminated comment")
+            errorHandler.scanError(line, "Unterminated comment")
             return
         }
 
