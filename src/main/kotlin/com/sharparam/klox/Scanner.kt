@@ -59,11 +59,13 @@ class Scanner(private val source: String) {
             '>' -> addToken(if (match('=')) TokenType.GREATER_EQUAL else TokenType.GREATER)
 
             '/' -> {
-                if (match('/')) {
-                    while (peek() != '\n' && !isAtEnd)
-                        advance()
-                } else {
-                    addToken(TokenType.SLASH)
+                when {
+                    match('/') -> {
+                        while (peek() != '\n' && !isAtEnd)
+                            advance()
+                    }
+                    match('*') -> comment()
+                    else -> addToken(TokenType.SLASH)
                 }
             }
 
@@ -139,5 +141,24 @@ class Scanner(private val source: String) {
         val text = source.substring(start, current)
         val type = KEYWORDS[text] ?: TokenType.IDENTIFIER
         addToken(type)
+    }
+
+    private fun comment() {
+        while (peek() != '*' && peekNext() != '/' && !isAtEnd) {
+            if (peek() == '\n')
+                line++
+            advance()
+        }
+
+        if (current + 1 >= source.length) {
+            error(line, "Unterminated comment")
+            return
+        }
+
+        // Consume '*'
+        advance()
+
+        // Consume '/'
+        advance()
     }
 }
