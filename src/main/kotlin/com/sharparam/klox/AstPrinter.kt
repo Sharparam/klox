@@ -14,16 +14,12 @@ class AstPrinter: Expression.Visitor<String> {
     override fun visit(expr: Expression.Conditional) = parenthesize("cond", expr.expression, expr.truthy, expr.falsey)
 
     private fun parenthesize(name: String, vararg exprs: Expression): String {
-        val builder = StringBuilder()
-
-        builder.append("(").append(name)
+        val builder = StringBuilder().append("(").append(name)
 
         exprs.forEach {
             builder.append(" ").append(it.accept(this))
         }
 
-        builder.append(")")
-
-        return builder.toString()
+        return builder.append(")").toString()
     }
 }
