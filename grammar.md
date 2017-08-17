@@ -1,0 +1,12 @@
+# Lox Grammar
+
+```
+expression     -> comma ;
+comma          -> equality ( "," equality)* ;
+equality       -> comparison ( ( "!=" | "==" ) comparison )* ;
+comparison     -> addition ( ( ">" | ">=" | "<" | "<=" ) addition )* ;
+addition       -> multiplication ( ( "-" | "+" ) multiplication )* ;
+multiplication -> unary ( ( "/" | "*" ) unary )* ;
+unary          -> ( "!" | "-" ) unary | primary ;
+primary        -> NUMBER | STRING | "false" | "true" | "nil" | "(" expression ")" ;
+```

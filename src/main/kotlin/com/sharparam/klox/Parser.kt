@@ -11,7 +11,9 @@ class Parser(private val tokens: List<Token>, private val errorHandler: ErrorHan
         null
     }
 
-    private fun expression() = equality()
+    private fun expression() = comma()
+
+    private fun comma() = binary(this::equality, TokenType.COMMA)
 
     private fun equality() = binary(this::comparison, TokenType.BANG_EQUAL, TokenType.EQUAL_EQUAL)
 
