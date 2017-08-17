@@ -2,7 +2,8 @@
 
 ```
 expression     -> comma ;
-comma          -> equality ( "," equality)* ;
+comma          -> equality ( "," equality )* ;
+conditional    -> equality ( "?" expression ":" conditional )? ;
 equality       -> comparison ( ( "!=" | "==" ) comparison )* ;
 comparison     -> addition ( ( ">" | ">=" | "<" | "<=" ) addition )* ;
 addition       -> multiplication ( ( "-" | "+" ) multiplication )* ;

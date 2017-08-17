@@ -19,10 +19,15 @@ abstract class Expression {
         override fun <T> accept(visitor: Visitor<T>) = visitor.visit(this)
     }
 
+    class Conditional(val expression: Expression, val truthy: Expression, val falsey: Expression): Expression() {
+        override fun <T> accept(visitor: Visitor<T>): T = visitor.visit(this)
+    }
+
     interface Visitor<out T> {
         fun visit(expr: Binary): T
         fun visit(expr: Grouping): T
         fun visit(expr: Literal): T
         fun visit(expr: Unary): T
+        fun visit(expr: Conditional): T
     }
 }

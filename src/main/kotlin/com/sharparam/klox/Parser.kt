@@ -13,7 +13,20 @@ class Parser(private val tokens: List<Token>, private val errorHandler: ErrorHan
 
     private fun expression() = comma()
 
-    private fun comma() = binary(this::equality, TokenType.COMMA)
+    private fun comma() = binary(this::conditional, TokenType.COMMA)
+
+    private fun conditional(): Expression {
+        var expr = equality()
+
+        if (match(TokenType.QUESTION)) {
+            val truthy = expression()
+            consume(TokenType.COLON, "Expected ':' in conditional expression.")
+            val falsey = conditional()
+            expr = Expression.Conditional(expr, truthy, falsey)
+        }
+
+        return expr
+    }
 
     private fun equality() = binary(this::comparison, TokenType.BANG_EQUAL, TokenType.EQUAL_EQUAL)
 
