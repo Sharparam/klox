@@ -58,6 +58,30 @@ class Parser(private val tokens: List<Token>, private val errorHandler: ErrorHan
             Expression.Grouping(expr)
         }
 
+        match(TokenType.BANG_EQUAL, TokenType.EQUAL_EQUAL) -> {
+            error(previous(), "Missing left-hand operand.")
+            equality()
+            Expression.Literal(null)
+        }
+
+        match(TokenType.GREATER, TokenType.GREATER_EQUAL, TokenType.LESS, TokenType.LESS_EQUAL) -> {
+            error(previous(), "Missing left-hand operand.")
+            comparison()
+            Expression.Literal(null)
+        }
+
+        match(TokenType.PLUS) -> {
+            error(previous(), "Missing left-hand operand.")
+            addition()
+            Expression.Literal(null)
+        }
+
+        match(TokenType.STAR, TokenType.SLASH) -> {
+            error(previous(), "Missing left-hand operand.")
+            multiplication()
+            Expression.Literal(null)
+        }
+
         else -> throw error(peek(), "Expected expression.")
     }
 
