@@ -7,7 +7,7 @@ import kotlin.system.exitProcess
 
 private val LOG by logger("main")
 
-fun main(args: Array<String>) {
+fun main(vararg args: String) {
     when (args.size) {
         0 -> runPrompt()
         1 -> runFile(args[0])
