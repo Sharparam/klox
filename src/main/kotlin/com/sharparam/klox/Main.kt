@@ -17,7 +17,16 @@ fun main(args: Array<String>) {
     }
 }
 
-fun runPrompt() {
+fun error(line: Int, message: String) {
+    report(line, "", message)
+}
+
+fun report(line: Int, where: String, message: String) {
+    LOG.error("[line {}] Error{}: {}", line, where, message)
+    hadError = true
+}
+
+private fun runPrompt() {
     LOG.debug("Running prompt")
     LOG.info("Welcome to klox, a REPL for Lox. Type code to evaluate it, or ':exit' to exit.")
     loop@ while (true) {
@@ -34,7 +43,7 @@ fun runPrompt() {
     }
 }
 
-fun runFile(path: String) {
+private fun runFile(path: String) {
     LOG.debug("Running file: {}", path)
     val bytes = Files.readAllBytes(Paths.get(path))
     run(String(bytes, Charset.defaultCharset()))
@@ -43,16 +52,7 @@ fun runFile(path: String) {
         exitProcess(65)
 }
 
-fun run(code: String) {
+private fun run(code: String) {
     val scanner = Scanner(code)
     scanner.scanTokens().forEach(::println)
-}
-
-fun error(line: Int, message: String) {
-    report(line, "", message)
-}
-
-fun report(line: Int, where: String, message: String) {
-    LOG.error("[line {}] Error{}: {}", line, where, message)
-    hadError = true
 }
