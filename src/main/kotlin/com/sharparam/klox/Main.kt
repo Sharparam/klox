@@ -28,6 +28,11 @@ val errorHandler = object: ErrorHandler {
         report(line, "", message)
     }
 
+    override fun parseError(token: Token, message: String) = when (token.type) {
+        TokenType.EOF -> report(token.line, " at end", message)
+        else -> report(token.line, " at '${token.lexeme}'", message)
+    }
+
     override fun resetError() {
         hadError = false
     }
@@ -66,5 +71,12 @@ private fun runFile(path: String) {
 
 private fun run(code: String) {
     val scanner = Scanner(code, errorHandler)
-    scanner.scanTokens().forEach(::println)
+    val tokens = scanner.scanTokens()
+    val parser = Parser(tokens, errorHandler)
+    val expression = parser.parse()
+
+    if (errorHandler.hadError)
+        return
+
+    println(AstPrinter().print(expression!!))
 }
