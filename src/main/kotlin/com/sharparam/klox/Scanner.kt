@@ -164,5 +164,6 @@ class Scanner(private val source: String, private val errorHandler: ErrorHandler
         advance()
     }
 
-    private fun column() = current - source.lastIndexOf('\n', current)
+    // Subtract one since we have already advanced a column when this is called.
+    private fun column() = current - source.lastIndexOf('\n', current) - 1
 }
