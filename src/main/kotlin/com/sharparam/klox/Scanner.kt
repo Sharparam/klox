@@ -112,7 +112,7 @@ class Scanner(private val source: String, private val errorHandler: ErrorHandler
         }
 
         if (isAtEnd) {
-            errorHandler.scanError(line, "Unterminated string")
+            errorHandler.scanError(line, "Unterminated string: ${source.substring(start, current)}")
             return
         }
 
