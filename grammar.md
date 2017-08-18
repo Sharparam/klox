@@ -1,6 +1,12 @@
 # Lox Grammar
 
 ```
+program        -> statement* EOF ;
+
+statement      -> exprStmt | printStmt ;
+exprStmt       -> expression ";" ;
+printStmt      -> "print" expression ";" ;
+
 expression     -> comma ;
 comma          -> equality ( "," equality )* ;
 conditional    -> equality ( "?" expression ":" conditional )? ;

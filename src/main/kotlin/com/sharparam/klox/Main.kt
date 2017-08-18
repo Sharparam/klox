@@ -83,10 +83,10 @@ private fun run(code: String) {
     val scanner = Scanner(code, errorHandler)
     val tokens = scanner.scanTokens()
     val parser = Parser(tokens, errorHandler)
-    val expression = parser.parse()
+    val statements = parser.parse()
 
     if (errorHandler.hadError)
         return
 
-    interpreter.interpret(expression!!)
+    interpreter.interpret(statements)
 }

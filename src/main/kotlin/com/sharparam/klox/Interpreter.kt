@@ -1,19 +1,23 @@
 package com.sharparam.klox
 
-class Interpreter(private val errorHandler: ErrorHandler) : Expression.Visitor<Any?> {
+class Interpreter(private val errorHandler: ErrorHandler) : Expression.Visitor<Any?>, Statement.Visitor<Unit> {
     private val Any?.isTruthy: Boolean get() = when (this) {
         null -> false
         is Boolean -> this
         else -> true
     }
 
-    fun interpret(expr: Expression) {
-        try {
-            println(expr.evaluate().stringify())
-        } catch (e: RuntimeError) {
-            errorHandler.runtimeError(e)
-        }
+    fun interpret(stmts: List<Statement>) = try {
+        stmts.forEach { it.execute() }
+    } catch (e: RuntimeError) {
+        errorHandler.runtimeError(e)
     }
+
+    override fun visit(stmt: Statement.Expression): Unit {
+        stmt.expression.evaluate()
+    }
+
+    override fun visit(stmt: Statement.Print) = println(stmt.expression.evaluate().stringify())
 
     override fun visit(expr: Expression.Binary): Any? {
         val left = expr.left.evaluate()
@@ -102,6 +106,8 @@ class Interpreter(private val errorHandler: ErrorHandler) : Expression.Visitor<A
 
         throw RuntimeError(operator, "Operands must be numbers.")
     }
+
+    private fun Statement.execute() = this.accept(this@Interpreter)
 
     private fun Expression.evaluate() = this.accept(this@Interpreter)
 

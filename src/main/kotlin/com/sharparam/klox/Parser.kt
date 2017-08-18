@@ -5,10 +5,33 @@ class Parser(private val tokens: List<Token>, private val errorHandler: ErrorHan
 
     private var current: Int = 0
 
-    fun parse() = try {
-        expression()
+    fun parse(): List<Statement> = try {
+        val statements = ArrayList<Statement>()
+
+        while (!isAtEnd) {
+            statements.add(statement())
+        }
+
+        statements
     } catch (e: ParseError) {
-        null
+        listOf()
+    }
+
+    private fun statement() = when {
+        match(TokenType.PRINT) -> printStatement()
+        else -> expressionStatement()
+    }
+
+    private fun printStatement(): Statement {
+        val value = expression()
+        consume(TokenType.SEMICOLON, "Expected ';' after value.")
+        return Statement.Print(value)
+    }
+
+    private fun expressionStatement(): Statement {
+        val expr = expression()
+        consume(TokenType.SEMICOLON, "Expected ';' after expression.")
+        return Statement.Expression(expr)
     }
 
     private fun expression() = comma()
