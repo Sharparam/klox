@@ -7,7 +7,7 @@ interface ErrorHandler {
 
     fun scanError(token: Token, message: String)
 
-    fun scanError(line: Int, message: String)
+    fun scanError(line: Int, column: Int, message: String)
 
     fun parseError(token: Token, message: String)
 

@@ -8,29 +8,25 @@ import kotlin.system.exitProcess
 private val LOG by logger("main")
 
 private val errorHandler = object: ErrorHandler {
-    private val log by logger("errorHandler")
-
-    private val printer = AstPrinter()
-
     override var hadError = false
 
     override var hadRuntimeError = false
 
     override fun scanError(token: Token, message: String) {
-        report(token.line, " in ${token.type}", message)
+        report(token.line, token.column, " in ${token.type}", message)
     }
 
-    override fun scanError(line: Int, message: String) {
-        report(line, "", message)
+    override fun scanError(line: Int, column: Int, message: String) {
+        report(line, column, "", message)
     }
 
     override fun parseError(token: Token, message: String) = when (token.type) {
-        TokenType.EOF -> report(token.line, " at end", message)
-        else -> report(token.line, " at '${token.lexeme}'", message)
+        TokenType.EOF -> report(token.line, token.column, " at end", message)
+        else -> report(token.line, token.column, " at '${token.lexeme}'", message)
     }
 
     override fun runtimeError(e: RuntimeError) {
-        log.error("{} [line {}]", e.message ?: "Unknown error.", e.token.line)
+        System.err.println("${e.message ?: "Unknown error"} [${e.token.line}:${e.token.column}]")
         hadRuntimeError = true
     }
 
@@ -39,8 +35,8 @@ private val errorHandler = object: ErrorHandler {
         hadRuntimeError = false
     }
 
-    private fun report(line: Int, where: String, message: String) {
-        log.error("[line {}] Error{}: {}", line, where, message)
+    private fun report(line: Int, column: Int, where: String, message: String) {
+        System.err.println("[$line:$column] Error$where: $message")
         hadError = true
     }
 }

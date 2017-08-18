@@ -35,7 +35,7 @@ class Scanner(private val source: String, private val errorHandler: ErrorHandler
             scanToken()
         }
 
-        tokens.add(Token(TokenType.EOF, "", null, line))
+        tokens.add(Token(TokenType.EOF, "", null, line, column()))
         return tokens
     }
 
@@ -81,7 +81,7 @@ class Scanner(private val source: String, private val errorHandler: ErrorHandler
 
             '\n' -> line++
 
-            else -> errorHandler.scanError(line, "Unexpected character: $c")
+            else -> errorHandler.scanError(line, column(), "Unexpected character: $c")
         }
     }
 
@@ -89,7 +89,7 @@ class Scanner(private val source: String, private val errorHandler: ErrorHandler
 
     private fun addToken(type: TokenType, literal: Any? = null) {
         val text = source.substring(start, current)
-        tokens.add(Token(type, text, literal, line))
+        tokens.add(Token(type, text, literal, line, column()))
     }
 
     private fun match(expected: Char): Boolean {
@@ -112,7 +112,7 @@ class Scanner(private val source: String, private val errorHandler: ErrorHandler
         }
 
         if (isAtEnd) {
-            errorHandler.scanError(line, "Unterminated string: ${source.substring(start, current)}")
+            errorHandler.scanError(line, column(), "Unterminated string: ${source.substring(start, current)}")
             return
         }
 
@@ -153,7 +153,7 @@ class Scanner(private val source: String, private val errorHandler: ErrorHandler
         }
 
         if (current + 1 >= source.length) {
-            errorHandler.scanError(line, "Unterminated comment")
+            errorHandler.scanError(line, column(), "Unterminated comment")
             return
         }
 
@@ -163,4 +163,6 @@ class Scanner(private val source: String, private val errorHandler: ErrorHandler
         // Consume '/'
         advance()
     }
+
+    private fun column() = current - source.lastIndexOf('\n', current)
 }
