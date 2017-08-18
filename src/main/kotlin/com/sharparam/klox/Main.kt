@@ -7,18 +7,14 @@ import kotlin.system.exitProcess
 
 private val LOG by logger("main")
 
-fun main(vararg args: String) {
-    when (args.size) {
-        0 -> runPrompt()
-        1 -> runFile(args[0])
-        else -> LOG.error("Usage: klox [script]")
-    }
-}
-
-val errorHandler = object: ErrorHandler {
+private val errorHandler = object: ErrorHandler {
     private val log by logger("errorHandler")
 
-    override var hadError: Boolean = false
+    private val printer = AstPrinter()
+
+    override var hadError = false
+
+    override var hadRuntimeError = false
 
     override fun scanError(token: Token, message: String) {
         report(token.line, " in ${token.type}", message)
@@ -33,13 +29,29 @@ val errorHandler = object: ErrorHandler {
         else -> report(token.line, " at '${token.lexeme}'", message)
     }
 
+    override fun runtimeError(e: RuntimeError) {
+        log.error("{} [line {}]", e.message ?: "Unknown error.", e.token.line)
+        hadRuntimeError = true
+    }
+
     override fun resetError() {
         hadError = false
+        hadRuntimeError = false
     }
 
     private fun report(line: Int, where: String, message: String) {
         log.error("[line {}] Error{}: {}", line, where, message)
         hadError = true
+    }
+}
+
+private val interpreter = Interpreter(errorHandler)
+
+fun main(vararg args: String) {
+    when (args.size) {
+        0 -> runPrompt()
+        1 -> runFile(args[0])
+        else -> LOG.error("Usage: klox [script]")
     }
 }
 
@@ -67,6 +79,8 @@ private fun runFile(path: String) {
 
     if (errorHandler.hadError)
         exitProcess(65)
+    else if (errorHandler.hadRuntimeError)
+        exitProcess(70)
 }
 
 private fun run(code: String) {
@@ -78,5 +92,5 @@ private fun run(code: String) {
     if (errorHandler.hadError)
         return
 
-    println(AstPrinter().print(expression!!))
+    interpreter.interpret(expression!!)
 }
