@@ -27,7 +27,11 @@ class Interpreter(private val errorHandler: ErrorHandler) : Expression.Visitor<A
 
             TokenType.SLASH -> {
                 checkNumberOperands(expr.operator, left, right)
-                (left as Double) / (right as Double)
+                val r = right as Double
+                if (r == 0.0)
+                    throw RuntimeError(expr.operator, "Division by zero.")
+
+                (left as Double) / r
             }
 
             TokenType.STAR -> {
