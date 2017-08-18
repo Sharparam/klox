@@ -60,7 +60,7 @@ class Interpreter(private val errorHandler: ErrorHandler) : Expression.Visitor<A
 
             TokenType.PLUS -> when {
                 left is Double && right is Double -> left + right
-                left is String && right is String -> left + right
+                left is String -> left + right.stringify()
 
                 else -> throw RuntimeError(expr.operator, "Operands must be two numbers or strings.")
             }
