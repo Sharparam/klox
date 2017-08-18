@@ -81,7 +81,7 @@ class Scanner(private val source: String, private val errorHandler: ErrorHandler
 
             '\n' -> line++
 
-            else -> errorHandler.scanError(line, "Unexpected character")
+            else -> errorHandler.scanError(line, "Unexpected character: $c")
         }
     }
 
