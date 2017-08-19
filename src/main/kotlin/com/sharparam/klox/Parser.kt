@@ -1,20 +1,42 @@
 package com.sharparam.klox
 
 class Parser(private val tokens: List<Token>, private val errorHandler: ErrorHandler) {
+    private val log by logger()
+
     private val isAtEnd get() = peek().type == TokenType.EOF
 
     private var current: Int = 0
 
-    fun parse(): List<Statement> = try {
+    fun parse(): List<Statement> {
         val statements = ArrayList<Statement>()
 
         while (!isAtEnd) {
-            statements.add(statement())
+            val stmt = declaration()
+            if (stmt != null)
+                statements.add(stmt)
         }
 
-        statements
+        return statements
+    }
+
+    private fun declaration() = try {
+        when {
+            match(TokenType.VAR) -> varDeclaration()
+            else -> statement()
+        }
     } catch (e: ParseError) {
-        listOf()
+        synchronize()
+        null
+    }
+
+    private fun varDeclaration(): Statement {
+        val name = consume(TokenType.IDENTIFIER, "Expected variable name.")
+
+        val initializer = if (match(TokenType.EQUAL)) expression() else Expression.Literal(null)
+
+        consume(TokenType.SEMICOLON, "Expected ';' after variable declaration.")
+
+        return Statement.Variable(name, initializer)
     }
 
     private fun statement() = when {
@@ -74,6 +96,7 @@ class Parser(private val tokens: List<Token>, private val errorHandler: ErrorHan
         match(TokenType.TRUE) -> Expression.Literal(true)
         match(TokenType.NIL) -> Expression.Literal(null)
         match(TokenType.NUMBER, TokenType.STRING) -> Expression.Literal(previous().literal)
+        match(TokenType.IDENTIFIER) -> Expression.Variable(previous())
 
         match(TokenType.LEFT_PAREN) -> {
             val expr = expression()
@@ -150,6 +173,8 @@ class Parser(private val tokens: List<Token>, private val errorHandler: ErrorHan
     private fun previous() = tokens[current - 1]
 
     private fun synchronize() {
+        log.debug("PARSER PANIC! Synchronizing...")
+
         advance()
 
         while (!isAtEnd) {

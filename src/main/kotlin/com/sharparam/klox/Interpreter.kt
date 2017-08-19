@@ -1,6 +1,8 @@
 package com.sharparam.klox
 
 class Interpreter(private val errorHandler: ErrorHandler) : Expression.Visitor<Any?>, Statement.Visitor<Unit> {
+    private val environment = Environment()
+
     private val Any?.isTruthy: Boolean get() = when (this) {
         null -> false
         is Boolean -> this
@@ -18,6 +20,10 @@ class Interpreter(private val errorHandler: ErrorHandler) : Expression.Visitor<A
     }
 
     override fun visit(stmt: Statement.Print) = println(stmt.expression.evaluate().stringify())
+
+    override fun visit(stmt: Statement.Variable) {
+        environment[stmt.name] = stmt.initializer.evaluate()
+    }
 
     override fun visit(expr: Expression.Binary): Any? {
         val left = expr.left.evaluate()
@@ -93,6 +99,8 @@ class Interpreter(private val errorHandler: ErrorHandler) : Expression.Visitor<A
             else -> null
         }
     }
+
+    override fun visit(expr: Expression.Variable) = environment[expr.name]
 
     override fun visit(expr: Expression.Conditional) =
             if (expr.expression.evaluate().isTruthy)

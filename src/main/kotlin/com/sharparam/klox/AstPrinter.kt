@@ -11,6 +11,8 @@ class AstPrinter: Expression.Visitor<String> {
 
     override fun visit(expr: Expression.Unary) = parenthesize(expr.operator.lexeme, expr.right)
 
+    override fun visit(expr: Expression.Variable) = parenthesize("var '${expr.name.lexeme}'")
+
     override fun visit(expr: Expression.Conditional) = parenthesize("cond", expr.expression, expr.truthy, expr.falsey)
 
     private fun parenthesize(name: String, vararg exprs: Expression): String {
