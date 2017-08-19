@@ -1,14 +1,14 @@
 package com.sharparam.klox
 
-import org.junit.Before
-import org.junit.Test
+import org.junit.jupiter.api.BeforeEach
+import org.junit.jupiter.api.Test
 import kotlin.test.assertEquals
 import kotlin.test.assertFailsWith
 
 class EnvironmentTests {
     private var environment: Environment = Environment()
 
-    @Before fun setUp() {
+    @BeforeEach fun setUp() {
         environment = Environment()
     }
 
