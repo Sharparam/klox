@@ -9,9 +9,13 @@ class Environment {
             else
                 throw RuntimeError(name, "Undefined variable '${name.lexeme}'.")
 
-    operator fun set(key: String, value: Any?) {
-        env[key] = value
-    }
+    fun define(name: Token, value: Any?) = set(name, value)
 
-    operator fun set(name: Token, value: Any?) = set(name.lexeme, value)
+    fun assign(name: Token, value: Any?) =
+            if (env.containsKey(name.lexeme))
+                this[name] = value
+            else
+                throw RuntimeError(name, "Undefined variable '${name.lexeme}'.")
+
+    private operator fun set(name: Token, value: Any?) = env.set(name.lexeme, value)
 }

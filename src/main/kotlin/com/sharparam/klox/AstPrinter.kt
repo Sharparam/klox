@@ -3,6 +3,8 @@ package com.sharparam.klox
 class AstPrinter: Expression.Visitor<String> {
     fun print(expr: Expression): String = expr.accept(this)
 
+    override fun visit(expr: Expression.Assignment) = parenthesize("assign '${expr.name.lexeme}'", expr.value)
+
     override fun visit(expr: Expression.Binary) = parenthesize(expr.operator.lexeme, expr.left, expr.right)
 
     override fun visit(expr: Expression.Grouping) = parenthesize("group", expr.expression)

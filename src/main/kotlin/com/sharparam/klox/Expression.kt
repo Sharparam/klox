@@ -3,6 +3,10 @@ package com.sharparam.klox
 abstract class Expression {
     abstract fun <T> accept(visitor: Visitor<T>): T
 
+    class Assignment(val name: Token, val value: Expression): Expression() {
+        override fun <T> accept(visitor: Visitor<T>) = visitor.visit(this)
+    }
+
     class Binary(val left: Expression, val operator: Token, val right: Expression): Expression() {
         override fun <T> accept(visitor: Visitor<T>) = visitor.visit(this)
     }
@@ -28,6 +32,7 @@ abstract class Expression {
     }
 
     interface Visitor<out T> {
+        fun visit(expr: Assignment): T
         fun visit(expr: Binary): T
         fun visit(expr: Grouping): T
         fun visit(expr: Literal): T

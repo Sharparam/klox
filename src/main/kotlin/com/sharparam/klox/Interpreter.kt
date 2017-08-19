@@ -22,7 +22,13 @@ class Interpreter(private val errorHandler: ErrorHandler) : Expression.Visitor<A
     override fun visit(stmt: Statement.Print) = println(stmt.expression.evaluate().stringify())
 
     override fun visit(stmt: Statement.Variable) {
-        environment[stmt.name] = stmt.initializer.evaluate()
+        environment.define(stmt.name, stmt.initializer.evaluate())
+    }
+
+    override fun visit(expr: Expression.Assignment): Any? {
+        val value = expr.value.evaluate()
+        environment.assign(expr.name, value)
+        return value
     }
 
     override fun visit(expr: Expression.Binary): Any? {

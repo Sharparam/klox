@@ -58,7 +58,25 @@ class Parser(private val tokens: List<Token>, private val errorHandler: ErrorHan
 
     private fun expression() = comma()
 
-    private fun comma() = binary(this::conditional, TokenType.COMMA)
+    private fun comma() = binary(this::assignment, TokenType.COMMA)
+
+    private fun assignment(): Expression {
+        val expr = conditional()
+
+        if (match(TokenType.EQUAL)) {
+            val equals = previous()
+            val value = assignment()
+
+            if (expr is Expression.Variable) {
+                val name = expr.name
+                return Expression.Assignment(name, value)
+            }
+
+            error(equals, "Invalid assignment target.")
+        }
+
+        return expr
+    }
 
     private fun conditional(): Expression {
         var expr = equality()
