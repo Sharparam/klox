@@ -113,10 +113,8 @@ class EnvironmentTests {
     companion object {
         private val TYPES: Array<KClass<*>> = arrayOf(Int::class, Double::class, String::class, Boolean::class, Nothing::class)
 
-        private val TYPE_COMBINATIONS: Array<Arguments> = TYPES.flatMap { left ->
-            TYPES.map { right ->
-                Arguments.of(left, right)
-            }
+        private val TYPE_COMBINATIONS: Array<Arguments> = TYPES.flatMap { first ->
+            TYPES.map { second -> Arguments.of(first, second) }
         }.toTypedArray()
 
         private fun String.toToken() = Token(TokenType.IDENTIFIER, this, null, 1, 1)
