@@ -1,81 +1,123 @@
 package com.sharparam.klox
 
 import org.junit.jupiter.api.BeforeEach
-import org.junit.jupiter.api.DynamicTest
 import org.junit.jupiter.api.Test
-import org.junit.jupiter.api.TestFactory
+import org.junit.jupiter.params.ParameterizedTest
+import org.junit.jupiter.params.provider.Arguments
+import org.junit.jupiter.params.provider.MethodSource
 import kotlin.reflect.KClass
 import kotlin.test.assertEquals
 import kotlin.test.assertFailsWith
 
 class EnvironmentTests {
-    private var environment: Environment = Environment()
+    private var global = Environment()
+    private var local = Environment(global)
 
     @BeforeEach fun setUp() {
-        environment = Environment()
+        global = Environment()
+        local = Environment(global)
     }
 
-    @Test fun shouldNotAssignUndeclared() {
-        assertFailsWith<RuntimeError> { environment.assign("foo", 42) }
+    @Test fun shouldNotGetUndeclared() = assertFailsWith<RuntimeError> { global["foo"] }
+
+    @Test fun shouldNotAssignUndeclared() = assertFailsWith<RuntimeError> { global.assign("foo", 42) }
+
+    @Test fun shouldNotExposeChildVarToParent() {
+        local.define("foo", "bar")
+        assertFailsWith<RuntimeError> { global["foo"] }
     }
 
-    @TestFactory
-    fun environmentTests() = TYPES.flatMap { old ->
-        listOf(
-                createDeclareTest(old),
-                *TYPES.flatMap { new ->
-                    listOf(
-                            createRedeclareTest(old, new),
-                            createDeclareAssignTest(old, new),
-                            createAssignTest(old, new)
-                    )
-                }.toTypedArray()
-        )
-
+    @Test fun shouldNotChangeParentWithChildDeclare() {
+        global.define("foo", "bar")
+        local.define("foo", "baz")
+        assertEquals("bar", global["foo"])
     }
 
-    private fun createDeclareTest(type: KClass<*>) =
-            DynamicTest.dynamicTest("shouldDeclare${type.loxName}") {
-                val value = generateValue(type)
-                environment.define("foo", value)
-                assertEquals(value, environment["foo"])
-            }
+    @ParameterizedTest
+    @MethodSource("generateTypes")
+    fun shouldGetDeclaredValue(type: KClass<*>) {
+        val value = generateValue(type)
+        global.define("foo", value)
+        assertEquals(value, global["foo"])
+    }
 
-    private fun createRedeclareTest(oldType: KClass<*>, newType: KClass<*>) =
-            DynamicTest.dynamicTest("shouldDeclare${newType.loxName}From${oldType.loxName}") {
-                val old = generateValue(oldType)
-                val new = generateValue(newType, true)
-                environment.define("foo", old)
-                environment.define("foo", new)
-                assertEquals(new, environment["foo"])
-            }
+    @ParameterizedTest
+    @MethodSource("generateTypes")
+    fun childShouldGetVarDeclaredInparent(type: KClass<*>) {
+        val value = generateValue(type)
+        global.define("foo", value)
+        assertEquals(value, local["foo"])
+    }
 
-    private fun createDeclareAssignTest(oldType: KClass<*>, newType: KClass<*>) =
-            DynamicTest.dynamicTest("shouldAssign${newType.loxName}FromDeclared${oldType.loxName}") {
-                val old = generateValue(oldType)
-                val new = generateValue(newType, true)
-                environment.define("foo", old)
-                environment.assign("foo", new)
-                assertEquals(new, environment["foo"])
-            }
+    @ParameterizedTest
+    @MethodSource("generateTypeCombinations")
+    fun shouldRedeclare(oldType: KClass<*>, newType: KClass<*>) {
+        val old = generateValue(oldType)
+        val new = generateValue(newType, true)
+        global.define("foo", old)
+        global.define("foo", new)
+        assertEquals(new, global["foo"])
+    }
 
-    private fun createAssignTest(oldType: KClass<*>, newType: KClass<*>) =
-            DynamicTest.dynamicTest("shouldAssign${newType.loxName}From${oldType.loxName}") {
-                val old = generateValue(oldType)
-                val new = generateValue(newType, true)
-                environment.define("foo", null)
-                environment.assign("foo", old)
-                environment.assign("foo", new)
-                assertEquals(new, environment["foo"])
-            }
+    @ParameterizedTest
+    @MethodSource("generateTypeCombinations")
+    fun shouldAssignToDeclaredVar(oldType: KClass<*>, newType: KClass<*>) {
+        val old = generateValue(oldType)
+        val new = generateValue(newType, true)
+        global.define("foo", old)
+        global.assign("foo", new)
+        assertEquals(new, global["foo"])
+    }
+
+    @ParameterizedTest
+    @MethodSource("generateTypeCombinations")
+    fun shouldOnlyUseLatestAssignedValue(oldType: KClass<*>, newType: KClass<*>) {
+        val old = generateValue(oldType)
+        val new = generateValue(newType, true)
+        global.define("foo", null)
+        global.assign("foo", old)
+        global.assign("foo", new)
+        assertEquals(new, global["foo"])
+    }
+
+    @ParameterizedTest
+    @MethodSource("generateTypeCombinations")
+    fun shouldUseChildDeclaredValueInChild(parentType: KClass<*>, childType: KClass<*>) {
+        val parent = generateValue(parentType)
+        val child = generateValue(childType, true)
+        global.define("foo", parent)
+        local.define("foo", child)
+        assertEquals(child, local["foo"])
+    }
+
+    @ParameterizedTest
+    @MethodSource("generateTypeCombinations")
+    fun childShouldChangeVarDeclaredInParent(parentType: KClass<*>, childType: KClass<*>) {
+        val parent = generateValue(parentType)
+        val child = generateValue(childType)
+        global.define("foo", parent)
+        local.assign("foo", child)
+        assertEquals(child, local["foo"])
+    }
+
+    @ParameterizedTest
+    @MethodSource("generateTypeCombinations")
+    fun shouldChangeParentVarWhenAssignedInChild(parentType: KClass<*>, childType: KClass<*>) {
+        val parent = generateValue(parentType)
+        val child = generateValue(childType, true)
+        global.define("foo", parent)
+        local.assign("foo", child)
+        assertEquals(child, global["foo"])
+    }
 
     companion object {
         private val TYPES: Array<KClass<*>> = arrayOf(Int::class, Double::class, String::class, Boolean::class, Nothing::class)
 
-        private val KClass<*>.loxName get() = when (simpleName) {
-            "Void" -> "Nil"
-            else -> simpleName
-        }
+        private val TYPE_COMBINATIONS: Array<Arguments> = TYPES.flatMap { left ->
+            TYPES.map { right ->
+                Arguments.of(left, right)
+            }
+        }.toTypedArray()
 
         private fun String.toToken() = Token(TokenType.IDENTIFIER, this, null, 1, 1)
 
@@ -95,5 +137,11 @@ class EnvironmentTests {
 
             else -> throw IllegalArgumentException("Unsupported type.")
         }
+
+        @Suppress("unused")
+        @JvmStatic private fun generateTypes() = TYPES
+
+        @Suppress("unused")
+        @JvmStatic private fun generateTypeCombinations() = TYPE_COMBINATIONS
     }
 }
