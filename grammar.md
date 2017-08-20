@@ -1,5 +1,9 @@
 # Lox Grammar
 
+This is the grammar implemented in klox.
+
+It's mostly the grammar as explained in the book, with some of the "challenges" implemented as well.
+
 ```
 program        -> declaration* EOF ;
 
@@ -7,9 +11,10 @@ declaration    -> varDecl | statement ;
 
 varDecl        -> "var" IDENTIFIER ("=" expression)? ";" ;
 
-statement      -> exprStmt | printStmt ;
+statement      -> exprStmt | printStmt | block ;
 exprStmt       -> expression ";" ;
 printStmt      -> "print" expression ";" ;
+block          -> "{" declaration* "}" ;
 
 expression     -> comma ;
 comma          -> assignment ( "," assignment )* ;

@@ -15,9 +15,14 @@ abstract class Statement {
         override fun <T> accept(visitor: Visitor<T>) = visitor.visit(this)
     }
 
+    class Block(val statements: List<Statement>): Statement() {
+        override fun <T> accept(visitor: Visitor<T>) = visitor.visit(this)
+    }
+
     interface Visitor<out T> {
         fun visit(stmt: Expression): T
         fun visit(stmt: Print): T
         fun visit(stmt: Variable): T
+        fun visit(stmt: Block): T
     }
 }
