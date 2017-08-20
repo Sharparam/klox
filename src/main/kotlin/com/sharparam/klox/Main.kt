@@ -61,7 +61,7 @@ private fun runPrompt() {
             null -> LOG.error("Input was NULL")
             ":exit" -> break@loop
             else -> {
-                run(line)
+                run(line, true)
                 errorHandler.resetError()
             }
         }
@@ -79,7 +79,7 @@ private fun runFile(path: String) {
         exitProcess(70)
 }
 
-private fun run(code: String) {
+private fun run(code: String, isPrompt: Boolean = false) {
     val scanner = Scanner(code, errorHandler)
     val tokens = scanner.scanTokens()
     val parser = Parser(tokens, errorHandler)
@@ -88,5 +88,13 @@ private fun run(code: String) {
     if (errorHandler.hadError)
         return
 
-    interpreter.interpret(statements)
+    if (isPrompt) {
+        statements.forEach {
+            if (it is Statement.Expression)
+                interpreter.interpret(Statement.Print(it.expression))
+            else
+                interpreter.interpret(it)
+        }
+    } else
+        interpreter.interpret(statements)
 }

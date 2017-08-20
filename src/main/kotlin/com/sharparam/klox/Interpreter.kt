@@ -9,8 +9,12 @@ class Interpreter(private val errorHandler: ErrorHandler) : Expression.Visitor<A
         else -> true
     }
 
-    fun interpret(stmts: List<Statement>) = try {
-        stmts.forEach { it.execute() }
+    fun interpret(stmts: List<Statement>) {
+        stmts.forEach { interpret(it) }
+    }
+
+    fun interpret(stmt: Statement) = try {
+        stmt.execute()
     } catch (e: RuntimeError) {
         errorHandler.runtimeError(e)
     }
