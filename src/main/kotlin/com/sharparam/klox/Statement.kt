@@ -7,6 +7,10 @@ abstract class Statement {
         override fun <T> accept(visitor: Visitor<T>) = visitor.visit(this)
     }
 
+    class If(val condition: com.sharparam.klox.Expression, val thenStmt: Statement, val elseStmt: Statement?): Statement() {
+        override fun <T> accept(visitor: Visitor<T>) = visitor.visit(this)
+    }
+
     class Print(val expression: com.sharparam.klox.Expression): Statement() {
         override fun <T> accept(visitor: Visitor<T>) = visitor.visit(this)
     }
@@ -21,6 +25,7 @@ abstract class Statement {
 
     interface Visitor<out T> {
         fun visit(stmt: Expression): T
+        fun visit(stmt: If): T
         fun visit(stmt: Print): T
         fun visit(stmt: Variable): T
         fun visit(stmt: Block): T

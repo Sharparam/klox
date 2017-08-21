@@ -11,8 +11,9 @@ declaration    -> varDecl | statement ;
 
 varDecl        -> "var" IDENTIFIER ("=" expression)? ";" ;
 
-statement      -> exprStmt | printStmt | block ;
+statement      -> exprStmt | ifStmt | printStmt | block ;
 exprStmt       -> expression ";" ;
+ifStmt         -> "if" "(" expression ")" statement ( "else" statement )? ;
 printStmt      -> "print" expression ";" ;
 block          -> "{" declaration* "}" ;
 

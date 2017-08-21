@@ -23,6 +23,13 @@ class Interpreter(private val errorHandler: ErrorHandler) : Expression.Visitor<A
         stmt.expression.evaluate()
     }
 
+    override fun visit(stmt: Statement.If) {
+        when {
+            stmt.condition.evaluate().isTruthy -> stmt.thenStmt.execute()
+            stmt.elseStmt != null -> stmt.elseStmt.execute()
+        }
+    }
+
     override fun visit(stmt: Statement.Print) = println(stmt.expression.evaluate().stringify())
 
     override fun visit(stmt: Statement.Variable) {

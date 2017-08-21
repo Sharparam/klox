@@ -42,9 +42,23 @@ class Parser(private val tokens: List<Token>, private val errorHandler: ErrorHan
     }
 
     private fun statement() = when {
+        match(TokenType.IF) -> ifStatement()
         match(TokenType.PRINT) -> printStatement()
         match(TokenType.LEFT_BRACE) -> block()
         else -> expressionStatement()
+    }
+
+    private fun ifStatement(): Statement {
+        consume(TokenType.LEFT_PAREN, "Expected '(' after 'if'.")
+
+        val condition = expression()
+
+        consume(TokenType.RIGHT_PAREN, "Expected ')' after condition.")
+
+        val thenStmt = statement()
+        val elseStmt = if (match(TokenType.ELSE)) statement() else null
+
+        return Statement.If(condition, thenStmt, elseStmt)
     }
 
     private fun printStatement(): Statement {
