@@ -100,6 +100,8 @@ class Interpreter(private val errorHandler: ErrorHandler) : Expression.Visitor<A
                 else -> throw RuntimeError(expr.operator, "Operands must be two numbers or strings.")
             }
 
+            TokenType.COMMA -> right
+
             else -> throw RuntimeError(expr.operator, "Unsupported operator.")
         }
     }
