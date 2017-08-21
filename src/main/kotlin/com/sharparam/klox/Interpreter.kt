@@ -36,14 +36,16 @@ class Interpreter(private val errorHandler: ErrorHandler) : Expression.Visitor<A
         environment.define(stmt.name, stmt.initializer.evaluate())
     }
 
-    override fun visit(stmt: Statement.While) {
+    override fun visit(stmt: Statement.While) = try {
         while (stmt.condition.evaluate().isTruthy)
             stmt.body.execute()
-    }
+    } catch (e: BreakException) { }
 
     override fun visit(stmt: Statement.Block) {
         stmt.statements.execute(Environment(environment))
     }
+
+    override fun visit(stmt: Statement.Break) = throw BreakException()
 
     override fun visit(expr: Expression.Assignment): Any? {
         val value = expr.value.evaluate()

@@ -27,6 +27,10 @@ abstract class Statement {
         override fun <T> accept(visitor: Visitor<T>) = visitor.visit(this)
     }
 
+    class Break: Statement() {
+        override fun <T> accept(visitor: Visitor<T>) = visitor.visit(this)
+    }
+
     interface Visitor<out T> {
         fun visit(stmt: Expression): T
         fun visit(stmt: If): T
@@ -34,5 +38,6 @@ abstract class Statement {
         fun visit(stmt: Variable): T
         fun visit(stmt: While): T
         fun visit(stmt: Block): T
+        fun visit(stmt: Break): T
     }
 }

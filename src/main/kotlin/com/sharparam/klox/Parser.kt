@@ -7,7 +7,9 @@ class Parser(private val tokens: List<Token>, private val errorHandler: ErrorHan
 
     private val isAtEnd get() = peek().type == TokenType.EOF
 
-    private var current: Int = 0
+    private var current = 0
+
+    private var loopDepth = 0
 
     fun parse(): List<Statement> {
         val statements = ArrayList<Statement>()
@@ -47,6 +49,7 @@ class Parser(private val tokens: List<Token>, private val errorHandler: ErrorHan
         match(TokenType.PRINT) -> printStatement()
         match(TokenType.WHILE) -> whileStatement()
         match(TokenType.LEFT_BRACE) -> block()
+        match(TokenType.BREAK) -> breakStatement()
         else -> expressionStatement()
     }
 
@@ -65,17 +68,23 @@ class Parser(private val tokens: List<Token>, private val errorHandler: ErrorHan
         val incr = if (check(TokenType.RIGHT_PAREN)) null else expression()
         consume(TokenType.RIGHT_PAREN, "Expected ')' after for clause.")
 
-        var body = statement()
+        try {
+            loopDepth++
 
-        if (incr != null)
-            body = Statement.Block(arrayOf(body, Statement.Expression(incr)).asIterable())
+            var body = statement()
 
-        body = Statement.While(cond, body)
+            if (incr != null)
+                body = Statement.Block(arrayOf(body, Statement.Expression(incr)).asIterable())
 
-        if (init != null)
-            body = Statement.Block(arrayOf(init, body).asIterable())
+            body = Statement.While(cond, body)
 
-        return body
+            if (init != null)
+                body = Statement.Block(arrayOf(init, body).asIterable())
+
+            return body
+        } finally {
+            loopDepth--
+        }
     }
 
     private fun ifStatement(): Statement {
@@ -101,8 +110,14 @@ class Parser(private val tokens: List<Token>, private val errorHandler: ErrorHan
         consume(TokenType.LEFT_PAREN, "Expected '(' after 'while'.")
         val condition = expression()
         consume(TokenType.RIGHT_PAREN, "Expected ')' after condition.")
-        val body = statement()
-        return Statement.While(condition, body)
+
+        try {
+            loopDepth++
+            val body = statement()
+            return Statement.While(condition, body)
+        } finally {
+            loopDepth--
+        }
     }
 
     private fun block(): Statement {
@@ -117,6 +132,14 @@ class Parser(private val tokens: List<Token>, private val errorHandler: ErrorHan
         consume(TokenType.RIGHT_BRACE, "Expected '}' to end block.")
 
         return Statement.Block(statements)
+    }
+
+    private fun breakStatement(): Statement {
+        if (loopDepth == 0)
+            error(previous(), "'break' can only be used inside loops.")
+
+        consume(TokenType.SEMICOLON, "Expected ';' after 'break';")
+        return Statement.Break()
     }
 
     private fun expressionStatement(): Statement {
