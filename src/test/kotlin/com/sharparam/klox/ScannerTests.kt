@@ -5,7 +5,6 @@ import org.junit.jupiter.params.ParameterizedTest
 import org.junit.jupiter.params.provider.Arguments
 import org.junit.jupiter.params.provider.MethodSource
 import org.junit.jupiter.params.provider.ValueSource
-
 import org.mockito.Mockito.*
 import kotlin.test.assertEquals
 
@@ -84,6 +83,15 @@ class ScannerTests {
         val scanner = Scanner("+/* comment*/+", mock(ErrorHandler::class.java))
         val tokens = scanner.scanTokens()
         assertEquals(listOf(TokenType.PLUS, TokenType.PLUS, TokenType.EOF), tokens.map { it.type })
+    }
+
+    @ParameterizedTest
+    @ValueSource(strings = arrayOf("^", "€", "#", "@", "$", "\\"))
+    fun shouldErrorOnUnexpectedCharacter(input: String) {
+        val errorHandler = mock(ErrorHandler::class.java)
+        val scanner = Scanner(input, errorHandler)
+        scanner.scanTokens()
+        verify(errorHandler).scanError(eq(1), eq(1), contains(input))
     }
 
     companion object {
