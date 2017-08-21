@@ -13,6 +13,8 @@ class AstPrinter: Expression.Visitor<String> {
 
     override fun visit(expr: Expression.Literal) = expr.value?.toString() ?: "nil"
 
+    override fun visit(expr: Expression.Logical) = parenthesize(expr.operator.lexeme, expr.left, expr.right)
+
     override fun visit(expr: Expression.Unary) = parenthesize(expr.operator.lexeme, expr.right)
 
     override fun visit(expr: Expression.Variable) = parenthesize("var '${expr.name.lexeme}'")

@@ -89,7 +89,7 @@ class Parser(private val tokens: List<Token>, private val errorHandler: ErrorHan
 
     private fun expression() = comma()
 
-    private fun comma() = binary(this::assignment, TokenType.COMMA)
+    private fun comma() = binary(Expression::Binary, this::assignment, TokenType.COMMA)
 
     private fun assignment(): Expression {
         val expr = conditional()
@@ -110,7 +110,7 @@ class Parser(private val tokens: List<Token>, private val errorHandler: ErrorHan
     }
 
     private fun conditional(): Expression {
-        var expr = equality()
+        var expr = or()
 
         if (match(TokenType.QUESTION)) {
             val truthy = expression()
@@ -122,13 +122,17 @@ class Parser(private val tokens: List<Token>, private val errorHandler: ErrorHan
         return expr
     }
 
-    private fun equality() = binary(this::comparison, TokenType.BANG_EQUAL, TokenType.EQUAL_EQUAL)
+    private fun or() = binary(Expression::Logical, this::and, TokenType.OR)
 
-    private fun comparison() = binary(this::addition, TokenType.GREATER, TokenType.GREATER_EQUAL, TokenType.LESS, TokenType.LESS_EQUAL)
+    private fun and() = binary(Expression::Logical, this::equality, TokenType.AND)
 
-    private fun addition() = binary(this::multiplication, TokenType.MINUS, TokenType.PLUS)
+    private fun equality() = binary(Expression::Binary, this::comparison, TokenType.BANG_EQUAL, TokenType.EQUAL_EQUAL)
 
-    private fun multiplication() = binary(this::unary, TokenType.SLASH, TokenType.STAR)
+    private fun comparison() = binary(Expression::Binary, this::addition, TokenType.GREATER, TokenType.GREATER_EQUAL, TokenType.LESS, TokenType.LESS_EQUAL)
+
+    private fun addition() = binary(Expression::Binary, this::multiplication, TokenType.MINUS, TokenType.PLUS)
+
+    private fun multiplication() = binary(Expression::Binary, this::unary, TokenType.SLASH, TokenType.STAR)
 
     private fun unary(): Expression {
         if (match(TokenType.BANG, TokenType.MINUS)) {
@@ -180,13 +184,13 @@ class Parser(private val tokens: List<Token>, private val errorHandler: ErrorHan
         else -> throw error(peek(), "Expected expression.")
     }
 
-    private fun binary(next: () -> Expression, vararg tokens: TokenType): Expression {
+    private fun <T : Expression> binary(ctor: (Expression, Token, Expression) -> T, next: () -> Expression, vararg tokens: TokenType): Expression {
         var expr = next()
 
         while (match(*tokens)) {
             val op = previous()
             val right = next()
-            expr = Expression.Binary(expr, op, right)
+            expr = ctor(expr, op, right)
         }
 
         return expr
@@ -233,7 +237,8 @@ class Parser(private val tokens: List<Token>, private val errorHandler: ErrorHan
             when (peek().type) {
                 TokenType.CLASS, TokenType.FUN, TokenType.VAR, TokenType.FOR, TokenType.IF,
                 TokenType.WHILE, TokenType.PRINT, TokenType.RETURN -> return
-                else -> { }
+                else -> {
+                }
             }
 
             advance()

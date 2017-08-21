@@ -19,6 +19,10 @@ abstract class Expression {
         override fun <T> accept(visitor: Visitor<T>) = visitor.visit(this)
     }
 
+    class Logical(val left: Expression, val operator: Token, val right: Expression): Expression() {
+        override fun <T> accept(visitor: Visitor<T>) = visitor.visit(this)
+    }
+
     class Unary(val operator: Token, val right: Expression): Expression() {
         override fun <T> accept(visitor: Visitor<T>) = visitor.visit(this)
     }
@@ -36,6 +40,7 @@ abstract class Expression {
         fun visit(expr: Binary): T
         fun visit(expr: Grouping): T
         fun visit(expr: Literal): T
+        fun visit(expr: Logical): T
         fun visit(expr: Unary): T
         fun visit(expr: Variable): T
         fun visit(expr: Conditional): T

@@ -110,6 +110,19 @@ class Interpreter(private val errorHandler: ErrorHandler) : Expression.Visitor<A
 
     override fun visit(expr: Expression.Literal) = expr.value
 
+    override fun visit(expr: Expression.Logical): Any? {
+        val left = expr.left.evaluate()
+
+        if (expr.operator.type == TokenType.OR) {
+            if (left.isTruthy)
+                return left
+        } else if (!left.isTruthy) {
+            return left
+        }
+
+        return expr.right.evaluate()
+    }
+
     override fun visit(expr: Expression.Unary): Any? {
         val right = expr.right.evaluate()
 
