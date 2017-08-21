@@ -1,5 +1,7 @@
 package com.sharparam.klox
 
+import com.sharparam.klox.util.logger
+
 class Parser(private val tokens: List<Token>, private val errorHandler: ErrorHandler) {
     private val log by logger()
 

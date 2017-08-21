@@ -1,4 +1,4 @@
-package com.sharparam.klox
+package com.sharparam.klox.util
 
 val Char.isAlpha get() = this in 'a'..'z' || this in 'A'..'Z' || this == '_'
 

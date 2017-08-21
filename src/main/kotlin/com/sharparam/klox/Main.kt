@@ -1,5 +1,6 @@
 package com.sharparam.klox
 
+import com.sharparam.klox.util.logger
 import java.nio.charset.Charset
 import java.nio.file.Files
 import java.nio.file.Paths

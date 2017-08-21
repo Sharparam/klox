@@ -1,4 +1,6 @@
-package com.sharparam.klox
+package com.sharparam.klox.util
+
+import com.sharparam.klox.Expression
 
 class AstPrinter: Expression.Visitor<String> {
     fun print(expr: Expression): String = expr.accept(this)

@@ -1,4 +1,4 @@
-package com.sharparam.klox
+package com.sharparam.klox.util
 
 import org.junit.jupiter.api.Test
 import org.junit.jupiter.params.ParameterizedTest
@@ -36,7 +36,7 @@ class CharTests {
     }
 
     companion object {
-        @JvmStatic fun createAlphaChars(): Array<Char> {
+        @JvmStatic private fun createAlphaChars(): Array<Char> {
             val chars = ArrayList<Char>()
 
             chars.addAll('a'..'z')
@@ -47,7 +47,7 @@ class CharTests {
         }
 
         @Suppress("unused")
-        @JvmStatic fun createAlphaNumericChars(): Array<Char> {
+        @JvmStatic private fun createAlphaNumericChars(): Array<Char> {
             val chars = ArrayList<Char>()
 
             chars.addAll(createAlphaChars())
@@ -56,7 +56,8 @@ class CharTests {
             return chars.toTypedArray()
         }
 
-        @JvmStatic fun createControlChars(): Array<Char> = arrayOf(
+        @Suppress("unused")
+        @JvmStatic private fun createControlChars(): Array<Char> = arrayOf(
                 '?', ':', ';', '<', '>', '=', '-', '/', '+', '*', '"', '\'', '(', ')', '[',']', '{', '}',
                 ',', '.', '|', '\\', '!', '@', '#', '$', '%', '^', '&'
         )

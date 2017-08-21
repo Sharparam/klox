@@ -1,4 +1,4 @@
-package com.sharparam.klox
+package com.sharparam.klox.util
 
 import org.slf4j.LoggerFactory
 import kotlin.reflect.KClass

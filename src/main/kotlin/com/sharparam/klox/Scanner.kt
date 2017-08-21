@@ -1,5 +1,7 @@
 package com.sharparam.klox
 
+import com.sharparam.klox.util.isAlphaNumeric
+
 class Scanner(private val source: String, private val errorHandler: ErrorHandler) {
     private val KEYWORDS = hashMapOf(
             "and" to TokenType.AND,
