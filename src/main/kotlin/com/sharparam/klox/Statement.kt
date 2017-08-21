@@ -23,7 +23,7 @@ abstract class Statement {
         override fun <T> accept(visitor: Visitor<T>) = visitor.visit(this)
     }
 
-    class Block(val statements: List<Statement>): Statement() {
+    class Block(val statements: Iterable<Statement>): Statement() {
         override fun <T> accept(visitor: Visitor<T>) = visitor.visit(this)
     }
 

@@ -158,9 +158,9 @@ class Interpreter(private val errorHandler: ErrorHandler) : Expression.Visitor<A
 
     private fun Statement.execute() = this.accept(this@Interpreter)
 
-    private fun List<Statement>.execute() = forEach { it.execute() }
+    private fun Iterable<Statement>.execute() = forEach { it.execute() }
 
-    private fun List<Statement>.execute(env: Environment) {
+    private fun Iterable<Statement>.execute(env: Environment) {
         val previousEnv = environment
 
         try {
