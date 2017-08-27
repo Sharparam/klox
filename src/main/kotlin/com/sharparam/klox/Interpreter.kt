@@ -1,7 +1,9 @@
 package com.sharparam.klox
 
 class Interpreter(private val errorHandler: ErrorHandler) : Expression.Visitor<Any?>, Statement.Visitor<Unit> {
-    private var environment = Environment()
+    val globals = Environment()
+
+    private var environment = globals
 
     private val Any?.isTruthy: Boolean get() = when (this) {
         null -> false
@@ -30,9 +32,15 @@ class Interpreter(private val errorHandler: ErrorHandler) : Expression.Visitor<A
         errorHandler.runtimeError(e)
     }
 
+    fun execute(stmt: Statement, env: Environment) {
+        stmt.execute(env)
+    }
+
     override fun visit(stmt: Statement.Expression) {
         stmt.expression.evaluate()
     }
+
+    override fun visit(stmt: Statement.Function) = environment.define(stmt.name, LoxFunction(stmt))
 
     override fun visit(stmt: Statement.If) {
         when {
@@ -184,6 +192,18 @@ class Interpreter(private val errorHandler: ErrorHandler) : Expression.Visitor<A
     }
 
     private fun Statement.execute() = accept(this@Interpreter)
+
+    @JvmName("stmtExecuteWithEnvExt")
+    private fun Statement.execute(env: Environment) {
+        val previousEnv = environment
+
+        try {
+            environment = env
+            execute()
+        } finally {
+            environment = previousEnv
+        }
+    }
 
     private fun Iterable<Statement>.execute() = forEach { it.execute() }
 

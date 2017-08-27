@@ -7,7 +7,11 @@ It's mostly the grammar as explained in the book, with some of the "challenges" 
 ```
 program        -> declaration* EOF ;
 
-declaration    -> varDecl | statement ;
+declaration    -> funDecl | varDecl | statement ;
+
+funDecl        -> "fun" function ;
+function       -> IDENTIFIER "(" parameters? ")" block ;
+parameters     -> IDENTIFIER ( "," IDENTIFIER )* ;
 
 varDecl        -> "var" IDENTIFIER ("=" expression)? ";" ;
 

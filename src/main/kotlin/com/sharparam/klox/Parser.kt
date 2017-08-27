@@ -25,12 +25,33 @@ class Parser(private val tokens: List<Token>, private val errorHandler: ErrorHan
 
     private fun declaration() = try {
         when {
+            match(TokenType.FUN) -> function("function")
             match(TokenType.VAR) -> varDeclaration()
             else -> statement()
         }
     } catch (e: ParseError) {
         synchronize()
         null
+    }
+
+    private fun function(kind: String): Statement {
+        val name = consume(TokenType.IDENTIFIER, "Expected $kind name.")
+        consume(TokenType.LEFT_PAREN, "Expected '(' after $kind name.")
+
+        val parameters = ArrayList<Token>()
+        if (!check(TokenType.RIGHT_PAREN)) {
+            do {
+                parameters.add(consume(TokenType.IDENTIFIER, "Expected parameter name."))
+            } while (match(TokenType.COMMA))
+        }
+
+        if (parameters.size >= MAX_ARGUMENT_COUNT)
+            error(peek(), "Cannot have more than $MAX_ARGUMENT_COUNT parameters.")
+
+        consume(TokenType.RIGHT_PAREN, "Expected ')' after parameter list.")
+        consume(TokenType.LEFT_BRACE, "Expected '{' before $kind body.")
+
+        return Statement.Function(name, parameters, block())
     }
 
     private fun varDeclaration(): Statement {
@@ -120,7 +141,7 @@ class Parser(private val tokens: List<Token>, private val errorHandler: ErrorHan
         }
     }
 
-    private fun block(): Statement {
+    private fun block(): Statement.Block {
         val statements = ArrayList<Statement>()
 
         while (!check(TokenType.RIGHT_BRACE) && !isAtEnd) {
