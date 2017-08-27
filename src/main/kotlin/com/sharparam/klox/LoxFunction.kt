@@ -11,7 +11,11 @@ class LoxFunction(private val declaration: Statement.Function): LoxCallable {
             environment.define(declaration.parameters.elementAt(it), arguments.elementAt(it))
         }
 
-        interpreter.execute(declaration.body, environment)
+        try {
+            interpreter.execute(declaration.body, environment)
+        } catch (e: ReturnException) {
+            return e.value
+        }
 
         return null
     }

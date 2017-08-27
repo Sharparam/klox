@@ -51,6 +51,11 @@ class Interpreter(private val errorHandler: ErrorHandler) : Expression.Visitor<A
 
     override fun visit(stmt: Statement.Print) = println(stmt.expression.evaluate().stringify())
 
+    override fun visit(stmt: Statement.Return) {
+        val value = if (stmt.value == null) null else stmt.value.evaluate()
+        throw ReturnException(value)
+    }
+
     override fun visit(stmt: Statement.Variable) {
         environment.define(stmt.name, stmt.initializer.evaluate())
     }

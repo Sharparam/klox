@@ -68,6 +68,7 @@ class Parser(private val tokens: List<Token>, private val errorHandler: ErrorHan
         match(TokenType.FOR) -> forStatement()
         match(TokenType.IF) -> ifStatement()
         match(TokenType.PRINT) -> printStatement()
+        match(TokenType.RETURN) -> returnStatement()
         match(TokenType.WHILE) -> whileStatement()
         match(TokenType.LEFT_BRACE) -> block()
         match(TokenType.BREAK) -> breakStatement()
@@ -125,6 +126,14 @@ class Parser(private val tokens: List<Token>, private val errorHandler: ErrorHan
         val value = expression()
         consume(TokenType.SEMICOLON, "Expected ';' after value.")
         return Statement.Print(value)
+    }
+
+    private fun returnStatement(): Statement {
+        val keyword = previous()
+
+        val value = if (check(TokenType.SEMICOLON)) null else expression()
+        consume(TokenType.SEMICOLON, "Expected ';' after return statement.")
+        return Statement.Return(keyword, value)
     }
 
     private fun whileStatement(): Statement {
