@@ -9,7 +9,9 @@ class Environment(private val parent: Environment? = null) {
         else -> throw RuntimeError(name, "Undefined variable '${name.lexeme}'.")
     }
 
-    fun define(name: Token, value: Any?) = set(name, value)
+    fun define(name: Token, value: Any?) = define(name.lexeme, value)
+
+    fun define(key: String, value: Any?) = env.set(key, value)
 
     fun assign(name: Token, value: Any?): Unit = when {
         env.containsKey(name.lexeme) -> this[name] = value

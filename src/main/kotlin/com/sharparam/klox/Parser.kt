@@ -202,7 +202,33 @@ class Parser(private val tokens: List<Token>, private val errorHandler: ErrorHan
             return Expression.Unary(op, right)
         }
 
-        return primary()
+        return call()
+    }
+
+    private fun call(): Expression {
+        var expr = primary()
+
+        while (match(TokenType.LEFT_PAREN))
+            expr = finishCall(expr)
+
+        return expr
+    }
+
+    private fun finishCall(callee: Expression): Expression {
+        val arguments = ArrayList<Expression>()
+
+        if (!check(TokenType.RIGHT_PAREN)) {
+            do {
+                arguments.add(assignment())
+            } while (match(TokenType.COMMA))
+        }
+
+        if (arguments.size >= MAX_ARGUMENT_COUNT)
+            error(peek(), "Function call cannot have more than $MAX_ARGUMENT_COUNT arguments.")
+
+        val paren = consume(TokenType.RIGHT_PAREN, "Expected ')' after arguments.")
+
+        return Expression.Call(callee, paren, arguments)
     }
 
     private fun primary() = when {
@@ -309,5 +335,9 @@ class Parser(private val tokens: List<Token>, private val errorHandler: ErrorHan
     private fun error(token: Token, message: String): ParseError {
         errorHandler.parseError(token, message)
         return ParseError()
+    }
+
+    companion object {
+        private const val MAX_ARGUMENT_COUNT = 8
     }
 }

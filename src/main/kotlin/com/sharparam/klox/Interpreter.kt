@@ -9,6 +9,17 @@ class Interpreter(private val errorHandler: ErrorHandler) : Expression.Visitor<A
         else -> true
     }
 
+    init {
+        environment.define("clock", object : LoxCallable {
+            override val arity: Int
+                get() = 0
+
+            override fun invoke(interpreter: Interpreter, arguments: Iterable<Any?>): Any? {
+                return System.currentTimeMillis() / 1000.0
+            }
+        })
+    }
+
     fun interpret(stmts: List<Statement>) {
         stmts.forEach { interpret(it) }
     }
@@ -113,6 +124,20 @@ class Interpreter(private val errorHandler: ErrorHandler) : Expression.Visitor<A
         }
     }
 
+    override fun visit(expr: Expression.Call): Any? {
+        val callee = expr.callee.evaluate()
+
+        val arguments = expr.arguments.evaluate()
+
+        if (callee !is LoxCallable)
+            throw RuntimeError(expr.paren, "Can only call functions and classes.")
+
+        if (arguments.size != callee.arity)
+            throw RuntimeError(expr.paren, "Expected ${callee.arity} arguments, got ${arguments.size}.")
+
+        return callee(this, arguments)
+    }
+
     override fun visit(expr: Expression.Grouping) = expr.expression.evaluate()
 
     override fun visit(expr: Expression.Literal) = expr.value
@@ -158,7 +183,7 @@ class Interpreter(private val errorHandler: ErrorHandler) : Expression.Visitor<A
         throw RuntimeError(operator, "Operands must be numbers.")
     }
 
-    private fun Statement.execute() = this.accept(this@Interpreter)
+    private fun Statement.execute() = accept(this@Interpreter)
 
     private fun Iterable<Statement>.execute() = forEach { it.execute() }
 
@@ -173,7 +198,9 @@ class Interpreter(private val errorHandler: ErrorHandler) : Expression.Visitor<A
         }
     }
 
-    private fun Expression.evaluate() = this.accept(this@Interpreter)
+    private fun Expression.evaluate() = accept(this@Interpreter)
+
+    private fun Iterable<Expression>.evaluate() = map { it.evaluate() }
 
     private fun Any?.stringify(): String = when (this) {
         null -> "nil"

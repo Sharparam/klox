@@ -9,6 +9,15 @@ class AstPrinter: Expression.Visitor<String> {
 
     override fun visit(expr: Expression.Binary) = parenthesize(expr.operator.lexeme, expr.left, expr.right)
 
+    override fun visit(expr: Expression.Call): String {
+        val exprs = ArrayList<Expression>(1 + expr.arguments.count())
+
+        exprs.add(expr.callee)
+        expr.arguments.forEach { exprs.add(it) }
+
+        return parenthesize("call", *exprs.toTypedArray())
+    }
+
     override fun visit(expr: Expression.Grouping) = parenthesize("group", expr.expression)
 
     override fun visit(expr: Expression.Literal) = expr.value?.toString() ?: "nil"

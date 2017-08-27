@@ -22,6 +22,7 @@ break          -> "break" ";" ;
 
 expression     -> comma ;
 comma          -> assignment ( "," assignment )* ;
+arguments      -> assignment ( "," assignment )* ;
 assignment     -> IDENTIFIER "=" assignment | conditional ;
 conditional    -> logic_or ( "?" expression ":" conditional )? ;
 logic_or       -> logic_and ( "or" logic_and )* ;
@@ -30,7 +31,8 @@ equality       -> comparison ( ( "!=" | "==" ) comparison )* ;
 comparison     -> addition ( ( ">" | ">=" | "<" | "<=" ) addition )* ;
 addition       -> multiplication ( ( "-" | "+" ) multiplication )* ;
 multiplication -> unary ( ( "/" | "*" ) unary )* ;
-unary          -> ( "!" | "-" ) unary | primary ;
+unary          -> ( "!" | "-" ) unary | call ;
+call           -> primary ( "(" arguments? ")" )* ;
 primary        -> NUMBER | STRING | "false" | "true" | "nil" | "(" expression ")" | IDENTIFIER
                 // Erroneous grammar
                 | ( "!=" | "==" ) equality
