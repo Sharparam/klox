@@ -7,7 +7,7 @@ abstract class Statement {
         override fun <T> accept(visitor: Visitor<T>) = visitor.visit(this)
     }
 
-    class Function(val name: Token, val parameters: Iterable<Token>, val body: Block): Statement() {
+    class Function(val name: Token, val function: com.sharparam.klox.Expression.Function): Statement() {
         override fun <T> accept(visitor: Visitor<T>) = visitor.visit(this)
     }
 

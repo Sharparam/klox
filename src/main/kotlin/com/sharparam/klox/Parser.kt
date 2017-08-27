@@ -25,7 +25,10 @@ class Parser(private val tokens: List<Token>, private val errorHandler: ErrorHan
 
     private fun declaration() = try {
         when {
-            match(TokenType.FUN) -> function("function")
+            check(TokenType.FUN) && checkNext(TokenType.IDENTIFIER) -> {
+                consume(TokenType.FUN, "Expected 'fun' to declare function.")
+                function("function")
+            }
             match(TokenType.VAR) -> varDeclaration()
             else -> statement()
         }
@@ -36,6 +39,11 @@ class Parser(private val tokens: List<Token>, private val errorHandler: ErrorHan
 
     private fun function(kind: String): Statement {
         val name = consume(TokenType.IDENTIFIER, "Expected $kind name.")
+
+        return Statement.Function(name, functionBody(kind))
+    }
+
+    private fun functionBody(kind: String): Expression.Function {
         consume(TokenType.LEFT_PAREN, "Expected '(' after $kind name.")
 
         val parameters = ArrayList<Token>()
@@ -51,7 +59,7 @@ class Parser(private val tokens: List<Token>, private val errorHandler: ErrorHan
         consume(TokenType.RIGHT_PAREN, "Expected ')' after parameter list.")
         consume(TokenType.LEFT_BRACE, "Expected '{' before $kind body.")
 
-        return Statement.Function(name, parameters, block())
+        return Expression.Function(parameters, block())
     }
 
     private fun varDeclaration(): Statement {
@@ -267,6 +275,7 @@ class Parser(private val tokens: List<Token>, private val errorHandler: ErrorHan
         match(TokenType.NIL) -> Expression.Literal(null)
         match(TokenType.NUMBER, TokenType.STRING) -> Expression.Literal(previous().literal)
         match(TokenType.IDENTIFIER) -> Expression.Variable(previous())
+        match(TokenType.FUN) -> functionBody("lambda")
 
         match(TokenType.LEFT_PAREN) -> {
             val expr = expression()
@@ -330,6 +339,12 @@ class Parser(private val tokens: List<Token>, private val errorHandler: ErrorHan
     }
 
     private fun check(type: TokenType) = if (isAtEnd) false else peek().type == type
+
+    private fun checkNext(type: TokenType) = when {
+        isAtEnd -> false
+        tokens[current + 1].type == TokenType.EOF -> false
+        else -> tokens[current + 1].type == type
+    }
 
     private fun advance(): Token {
         if (!isAtEnd)

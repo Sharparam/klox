@@ -30,6 +30,10 @@ class AstPrinter: Expression.Visitor<String> {
 
     override fun visit(expr: Expression.Conditional) = parenthesize("cond", expr.expression, expr.truthy, expr.falsey)
 
+    override fun visit(expr: Expression.Function) = parenthesize(
+            "function${expr.parameters.joinToString(" ", prefix = " ") { it.lexeme }}"
+    )
+
     private fun parenthesize(name: String, vararg exprs: Expression): String {
         val builder = StringBuilder().append("(").append(name)
 

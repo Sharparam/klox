@@ -35,6 +35,10 @@ abstract class Expression {
         override fun <T> accept(visitor: Visitor<T>) = visitor.visit(this)
     }
 
+    class Function(val parameters: Iterable<Token>, val body: Statement.Block): Expression() {
+        override fun <T> accept(visitor: Visitor<T>) = visitor.visit(this)
+    }
+
     class Conditional(val expression: Expression, val truthy: Expression, val falsey: Expression): Expression() {
         override fun <T> accept(visitor: Visitor<T>): T = visitor.visit(this)
     }
@@ -48,6 +52,7 @@ abstract class Expression {
         fun visit(expr: Logical): T
         fun visit(expr: Unary): T
         fun visit(expr: Variable): T
+        fun visit(expr: Function): T
         fun visit(expr: Conditional): T
     }
 }

@@ -1,18 +1,22 @@
 package com.sharparam.klox
 
-class LoxFunction(private val declaration: Statement.Function, private val closure: Environment): LoxCallable {
+class LoxFunction(
+        private val function: Expression.Function,
+        private val closure: Environment,
+        private val name: String? = null
+): LoxCallable {
     override val arity: Int
-        get() = declaration.parameters.count()
+        get() = function.parameters.count()
 
     override fun invoke(interpreter: Interpreter, arguments: Iterable<Any?>): Any? {
         val environment = Environment(closure)
 
-        (0 until declaration.parameters.count()).forEach {
-            environment.define(declaration.parameters.elementAt(it), arguments.elementAt(it))
+        (0 until function.parameters.count()).forEach {
+            environment.define(function.parameters.elementAt(it), arguments.elementAt(it))
         }
 
         try {
-            interpreter.execute(declaration.body, environment)
+            interpreter.execute(function.body, environment)
         } catch (e: ReturnException) {
             return e.value
         }
@@ -20,5 +24,5 @@ class LoxFunction(private val declaration: Statement.Function, private val closu
         return null
     }
 
-    override fun toString() = "<fun ${declaration.name.lexeme}>"
+    override fun toString() = if (name == null) "<fun>" else "<fun $name>"
 }

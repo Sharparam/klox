@@ -40,7 +40,8 @@ class Interpreter(private val errorHandler: ErrorHandler) : Expression.Visitor<A
         stmt.expression.evaluate()
     }
 
-    override fun visit(stmt: Statement.Function) = environment.define(stmt.name, LoxFunction(stmt, environment))
+    override fun visit(stmt: Statement.Function) =
+            environment.define(stmt.name, LoxFunction(stmt.function, environment, stmt.name.lexeme))
 
     override fun visit(stmt: Statement.If) {
         when {
@@ -188,6 +189,8 @@ class Interpreter(private val errorHandler: ErrorHandler) : Expression.Visitor<A
                 expr.truthy.evaluate()
             else
                 expr.falsey.evaluate()
+
+    override fun visit(expr: Expression.Function) = LoxFunction(expr, environment)
 
     private fun checkNumberOperands(operator: Token, vararg operands: Any?) {
         if (operands.all { it is Double })

@@ -39,10 +39,12 @@ addition       -> multiplication ( ( "-" | "+" ) multiplication )* ;
 multiplication -> unary ( ( "/" | "*" ) unary )* ;
 unary          -> ( "!" | "-" ) unary | call ;
 call           -> primary ( "(" arguments? ")" )* ;
-primary        -> NUMBER | STRING | "false" | "true" | "nil" | "(" expression ")" | IDENTIFIER
+primary        -> NUMBER | STRING | "false" | "true" | "nil"
+                | "(" expression ")" | IDENTIFIER | funExpr
                 // Erroneous grammar
                 | ( "!=" | "==" ) equality
                 | ( ">" | ">=" | "<" | "<=" ) comparison
                 | "+" addition
                 | ( "/" | "*" ) multiplication ;
+funExpr        -> "fun" "(" parameters? ")" block ;
 ```
