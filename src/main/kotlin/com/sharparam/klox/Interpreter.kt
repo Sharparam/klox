@@ -1,7 +1,7 @@
 package com.sharparam.klox
 
 class Interpreter(private val errorHandler: ErrorHandler) : Expression.Visitor<Any?>, Statement.Visitor<Unit> {
-    val globals = Environment()
+    private val globals = Environment()
 
     private var environment = globals
 
