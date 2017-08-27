@@ -40,7 +40,7 @@ class Interpreter(private val errorHandler: ErrorHandler) : Expression.Visitor<A
         stmt.expression.evaluate()
     }
 
-    override fun visit(stmt: Statement.Function) = environment.define(stmt.name, LoxFunction(stmt))
+    override fun visit(stmt: Statement.Function) = environment.define(stmt.name, LoxFunction(stmt, environment))
 
     override fun visit(stmt: Statement.If) {
         when {
