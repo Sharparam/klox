@@ -29,7 +29,7 @@ break          -> "break" ";" ;
 expression     -> comma ;
 comma          -> assignment ( "," assignment )* ;
 arguments      -> assignment ( "," assignment )* ;
-assignment     -> IDENTIFIER "=" assignment | conditional ;
+assignment     -> IDENTIFIER ( "-" | "+" )? "=" assignment | conditional ;
 conditional    -> logic_or ( "?" expression ":" conditional )? ;
 logic_or       -> logic_and ( "or" logic_and )* ;
 logic_and      -> equality ( "and" equality )* ;

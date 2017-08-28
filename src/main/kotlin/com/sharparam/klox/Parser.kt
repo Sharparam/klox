@@ -187,13 +187,25 @@ class Parser(private val tokens: List<Token>, private val errorHandler: ErrorHan
     private fun assignment(): Expression {
         val expr = conditional()
 
-        if (match(TokenType.EQUAL)) {
+        if (match(TokenType.EQUAL, TokenType.PLUS_EQUAL, TokenType.MINUS_EQUAL)) {
             val equals = previous()
             val value = assignment()
 
             if (expr is Expression.Variable) {
                 val name = expr.name
-                return Expression.Assignment(name, value)
+                return Expression.Assignment(name, when (equals.type) {
+                    TokenType.PLUS_EQUAL -> Expression.Binary(
+                            expr,
+                            Token(TokenType.PLUS, "+", null, equals.line, equals.column),
+                            value
+                    )
+                    TokenType.MINUS_EQUAL -> Expression.Binary(
+                            expr,
+                            Token(TokenType.MINUS, "-", null, equals.line, equals.column),
+                            value
+                    )
+                    else -> value
+                })
             }
 
             error(equals, "Invalid assignment target.")
