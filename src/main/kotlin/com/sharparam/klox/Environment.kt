@@ -3,10 +3,16 @@ package com.sharparam.klox
 class Environment(private val parent: Environment? = null) {
     private val env = HashMap<String, Any?>()
 
-    operator fun get(name: Token): Any? = when {
-        env.containsKey(name.lexeme) -> env[name.lexeme]
-        parent != null -> parent[name]
-        else -> throw RuntimeError(name, "Undefined variable '${name.lexeme}'.")
+    operator fun get(key: String): Any? = when {
+        env.containsKey(key) -> env[key]
+        parent != null -> parent[key]
+        else -> throw KeyNotFoundError(key)
+    }
+
+    operator fun get(name: Token): Any? = try {
+        this[name.lexeme]
+    } catch (e: KeyNotFoundError) {
+        throw RuntimeError(name, "Undefined variable '${name.lexeme}'.")
     }
 
     fun define(name: Token, value: Any?) = define(name.lexeme, value)
@@ -20,4 +26,6 @@ class Environment(private val parent: Environment? = null) {
     }
 
     private operator fun set(name: Token, value: Any?) = env.set(name.lexeme, value)
+
+    class KeyNotFoundError(@Suppress("unused") val key: String): RuntimeException()
 }

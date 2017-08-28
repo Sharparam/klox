@@ -92,7 +92,11 @@ private fun run(code: String, isPrompt: Boolean = false) {
     if (isPrompt) {
         statements.forEach {
             if (it is Statement.Expression)
-                interpreter.interpret(Statement.Print(it.expression))
+                interpreter.interpret(Statement.Expression(Expression.Call(
+                        Expression.Literal(interpreter.globals["print"]),
+                        Token(TokenType.LEFT_PAREN, "(", null, 1, 6),
+                        listOf(it.expression)
+                )))
             else
                 interpreter.interpret(it)
         }
