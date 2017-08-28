@@ -32,8 +32,8 @@ class Interpreter(private val errorHandler: ErrorHandler) : Expression.Visitor<A
         errorHandler.runtimeError(e)
     }
 
-    fun execute(stmt: Statement, env: Environment) {
-        stmt.execute(env)
+    fun execute(stmts: Iterable<Statement>, env: Environment) {
+        stmts.execute(env)
     }
 
     override fun visit(stmt: Statement.Expression) {
@@ -230,6 +230,7 @@ class Interpreter(private val errorHandler: ErrorHandler) : Expression.Visitor<A
 
     private fun Iterable<Statement>.execute() = forEach { it.execute() }
 
+    @JvmName("stmtsExecuteWithEnvExt")
     private fun Iterable<Statement>.execute(env: Environment) {
         val previousEnv = environment
 

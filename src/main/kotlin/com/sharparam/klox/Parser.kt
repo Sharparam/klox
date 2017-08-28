@@ -78,7 +78,7 @@ class Parser(private val tokens: List<Token>, private val errorHandler: ErrorHan
         match(TokenType.PRINT) -> printStatement()
         match(TokenType.RETURN) -> returnStatement()
         match(TokenType.WHILE) -> whileStatement()
-        match(TokenType.LEFT_BRACE) -> block()
+        match(TokenType.LEFT_BRACE) -> Statement.Block(block())
         match(TokenType.BREAK) -> breakStatement()
         match(TokenType.CONTINUE) -> continueStatement()
         else -> expressionStatement()
@@ -148,7 +148,7 @@ class Parser(private val tokens: List<Token>, private val errorHandler: ErrorHan
         }
     }
 
-    private fun block(): Statement.Block {
+    private fun block(): Iterable<Statement> {
         val statements = ArrayList<Statement>()
 
         while (!check(TokenType.RIGHT_BRACE) && !isAtEnd) {
@@ -159,7 +159,7 @@ class Parser(private val tokens: List<Token>, private val errorHandler: ErrorHan
 
         consume(TokenType.RIGHT_BRACE, "Expected '}' to end block.")
 
-        return Statement.Block(statements)
+        return statements
     }
 
     private fun breakStatement() = flowStatement(Statement::Break, "break")

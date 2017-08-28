@@ -35,7 +35,7 @@ abstract class Expression {
         override fun <T> accept(visitor: Visitor<T>) = visitor.visit(this)
     }
 
-    class Function(val parameters: Iterable<Token>, val body: Statement.Block): Expression() {
+    class Function(val parameters: Iterable<Token>, val body: Iterable<Statement>): Expression() {
         override fun <T> accept(visitor: Visitor<T>) = visitor.visit(this)
     }
 
