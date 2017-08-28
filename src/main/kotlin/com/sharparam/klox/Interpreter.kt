@@ -216,18 +216,6 @@ class Interpreter(private val errorHandler: ErrorHandler) : Expression.Visitor<A
 
     private fun Statement.execute() = accept(this@Interpreter)
 
-    @JvmName("stmtExecuteWithEnvExt")
-    private fun Statement.execute(env: Environment) {
-        val previousEnv = environment
-
-        try {
-            environment = env
-            execute()
-        } finally {
-            environment = previousEnv
-        }
-    }
-
     private fun Iterable<Statement>.execute() = forEach { it.execute() }
 
     @JvmName("stmtsExecuteWithEnvExt")
