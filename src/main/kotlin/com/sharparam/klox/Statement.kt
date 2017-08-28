@@ -31,11 +31,24 @@ abstract class Statement {
         override fun <T> accept(visitor: Visitor<T>) = visitor.visit(this)
     }
 
+    class For(
+            val init: Statement?,
+            val condition: com.sharparam.klox.Expression,
+            val increment: Statement?,
+            val body: Statement
+    ): Statement() {
+        override fun <T> accept(visitor: Visitor<T>) = visitor.visit(this)
+    }
+
     class Block(val statements: Iterable<Statement>): Statement() {
         override fun <T> accept(visitor: Visitor<T>) = visitor.visit(this)
     }
 
     class Break: Statement() {
+        override fun <T> accept(visitor: Visitor<T>) = visitor.visit(this)
+    }
+
+    class Continue: Statement() {
         override fun <T> accept(visitor: Visitor<T>) = visitor.visit(this)
     }
 
@@ -47,7 +60,9 @@ abstract class Statement {
         fun visit(stmt: Variable): T
         fun visit(stmt: Return): T
         fun visit(stmt: While): T
+        fun visit(stmt: For): T
         fun visit(stmt: Block): T
         fun visit(stmt: Break): T
+        fun visit(stmt: Continue): T
     }
 }

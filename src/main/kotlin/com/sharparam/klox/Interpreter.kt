@@ -62,8 +62,21 @@ class Interpreter(private val errorHandler: ErrorHandler) : Expression.Visitor<A
     }
 
     override fun visit(stmt: Statement.While) = try {
-        while (stmt.condition.evaluate().isTruthy)
-            stmt.body.execute()
+        while (stmt.condition.evaluate().isTruthy) {
+            try {
+                stmt.body.execute()
+            } catch (e: ContinueException) { }
+        }
+    } catch (e: BreakException) { }
+
+    override fun visit(stmt: Statement.For) = try {
+        stmt.init?.execute()
+        while (stmt.condition.evaluate().isTruthy) {
+            try {
+                stmt.body.execute()
+            } catch (e: ContinueException) { }
+            stmt.increment?.execute()
+        }
     } catch (e: BreakException) { }
 
     override fun visit(stmt: Statement.Block) {
@@ -71,6 +84,8 @@ class Interpreter(private val errorHandler: ErrorHandler) : Expression.Visitor<A
     }
 
     override fun visit(stmt: Statement.Break) = throw BreakException()
+
+    override fun visit(stmt: Statement.Continue) = throw ContinueException()
 
     override fun visit(expr: Expression.Assignment): Any? {
         val value = expr.value.evaluate()

@@ -20,7 +20,8 @@ class Scanner(private val source: String, private val errorHandler: ErrorHandler
             "true" to TokenType.TRUE,
             "var" to TokenType.VAR,
             "while" to TokenType.WHILE,
-            "break" to TokenType.BREAK
+            "break" to TokenType.BREAK,
+            "continue" to TokenType.CONTINUE
     )
 
     private val tokens: MutableList<Token> = ArrayList()

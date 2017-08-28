@@ -80,6 +80,7 @@ class Parser(private val tokens: List<Token>, private val errorHandler: ErrorHan
         match(TokenType.WHILE) -> whileStatement()
         match(TokenType.LEFT_BRACE) -> block()
         match(TokenType.BREAK) -> breakStatement()
+        match(TokenType.CONTINUE) -> continueStatement()
         else -> expressionStatement()
     }
 
@@ -95,23 +96,12 @@ class Parser(private val tokens: List<Token>, private val errorHandler: ErrorHan
         val cond = if (check(TokenType.SEMICOLON)) Expression.Literal(true) else expression()
         consume(TokenType.SEMICOLON, "Expected ';' after for condition.")
 
-        val incr = if (check(TokenType.RIGHT_PAREN)) null else expression()
+        val incr = if (check(TokenType.RIGHT_PAREN)) null else Statement.Expression(expression())
         consume(TokenType.RIGHT_PAREN, "Expected ')' after for clause.")
 
         try {
             loopDepth++
-
-            var body = statement()
-
-            if (incr != null)
-                body = Statement.Block(arrayOf(body, Statement.Expression(incr)).asIterable())
-
-            body = Statement.While(cond, body)
-
-            if (init != null)
-                body = Statement.Block(arrayOf(init, body).asIterable())
-
-            return body
+            return Statement.For(init, cond, incr, statement())
         } finally {
             loopDepth--
         }
@@ -172,12 +162,16 @@ class Parser(private val tokens: List<Token>, private val errorHandler: ErrorHan
         return Statement.Block(statements)
     }
 
-    private fun breakStatement(): Statement {
-        if (loopDepth == 0)
-            error(previous(), "'break' can only be used inside loops.")
+    private fun breakStatement() = flowStatement(Statement::Break, "break")
 
-        consume(TokenType.SEMICOLON, "Expected ';' after 'break';")
-        return Statement.Break()
+    private fun continueStatement() = flowStatement(Statement::Continue, "continue")
+
+    private fun <T: Statement> flowStatement(ctor: () -> T, type: String): T {
+        if (loopDepth == 0)
+            error(previous(), "'$type' can only be used inside loops.")
+
+        consume(TokenType.SEMICOLON, "Expected ';' after '$type'.")
+        return ctor()
     }
 
     private fun expressionStatement(): Statement {
