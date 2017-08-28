@@ -12,6 +12,15 @@ class Interpreter(private val errorHandler: ErrorHandler) : Expression.Visitor<A
     }
 
     init {
+        environment.define("type", object : LoxCallable {
+            override val arity: Int
+                get() = 1
+
+            override fun invoke(interpreter: Interpreter, arguments: Iterable<Any?>): Any? {
+                return arguments.first().loxType
+            }
+        })
+
         environment.define("clock", object : LoxCallable {
             override val arity: Int
                 get() = 0
@@ -254,5 +263,14 @@ class Interpreter(private val errorHandler: ErrorHandler) : Expression.Visitor<A
         }
 
         else -> this.toString()
+    }
+
+    private val Any?.loxType: String get() = when (this) {
+        is String -> "string"
+        is Double -> "number"
+        is Boolean -> "bool"
+        is LoxCallable -> "function"
+        null -> "nil"
+        else -> "undefined"
     }
 }
