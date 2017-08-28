@@ -1,0 +1,20 @@
+print("Welcome to the adder!");
+
+while (true) {
+  print("Type first number:");
+  var first = read();
+  print("Type second number:");
+  var second = read();
+
+  first = tonumber(first);
+  second = tonumber(second);
+
+  if (first == nil or second == nil) {
+    print("Invalid numbers!");
+    break;
+  }
+
+  var result = first + second;
+
+  print(tostring(first) + " + " + second + " = " + result);
+}

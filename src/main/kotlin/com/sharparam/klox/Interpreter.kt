@@ -39,6 +39,33 @@ class Interpreter(private val errorHandler: ErrorHandler) : Expression.Visitor<A
                 return null
             }
         })
+
+        environment.define("read", object : LoxCallable {
+            override val arity: Int
+                get() = 0
+
+            override fun invoke(interpreter: Interpreter, arguments: Iterable<Any?>): Any? {
+                return readLine()
+            }
+        })
+
+        environment.define("tonumber", object : LoxCallable {
+            override val arity: Int
+                get() = 1
+
+            override fun invoke(interpreter: Interpreter, arguments: Iterable<Any?>): Any? {
+                return arguments.first().toString().toDoubleOrNull()
+            }
+        })
+
+        environment.define("tostring", object : LoxCallable {
+            override val arity: Int
+                get() = 1
+
+            override fun invoke(interpreter: Interpreter, arguments: Iterable<Any?>): Any? {
+                return arguments.first().stringify()
+            }
+        })
     }
 
     fun interpret(stmts: List<Statement>) {
