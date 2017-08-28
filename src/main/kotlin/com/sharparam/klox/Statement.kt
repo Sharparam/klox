@@ -15,10 +15,6 @@ abstract class Statement {
         override fun <T> accept(visitor: Visitor<T>) = visitor.visit(this)
     }
 
-    class Print(val expression: com.sharparam.klox.Expression): Statement() {
-        override fun <T> accept(visitor: Visitor<T>) = visitor.visit(this)
-    }
-
     class Variable(val name: Token, val initializer: com.sharparam.klox.Expression): Statement() {
         override fun <T> accept(visitor: Visitor<T>) = visitor.visit(this)
     }
@@ -56,7 +52,6 @@ abstract class Statement {
         fun visit(stmt: Expression): T
         fun visit(stmt: Function): T
         fun visit(stmt: If): T
-        fun visit(stmt: Print): T
         fun visit(stmt: Variable): T
         fun visit(stmt: Return): T
         fun visit(stmt: While): T

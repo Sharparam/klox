@@ -75,7 +75,6 @@ class Parser(private val tokens: List<Token>, private val errorHandler: ErrorHan
     private fun statement() = when {
         match(TokenType.FOR) -> forStatement()
         match(TokenType.IF) -> ifStatement()
-        match(TokenType.PRINT) -> printStatement()
         match(TokenType.RETURN) -> returnStatement()
         match(TokenType.WHILE) -> whileStatement()
         match(TokenType.LEFT_BRACE) -> Statement.Block(block())
@@ -120,12 +119,6 @@ class Parser(private val tokens: List<Token>, private val errorHandler: ErrorHan
         return Statement.If(condition, thenStmt, elseStmt)
     }
 
-    private fun printStatement(): Statement {
-        val value = expression()
-        consume(TokenType.SEMICOLON, "Expected ';' after value.")
-        return Statement.Print(value)
-    }
-
     private fun returnStatement(): Statement {
         val keyword = previous()
 
@@ -166,7 +159,7 @@ class Parser(private val tokens: List<Token>, private val errorHandler: ErrorHan
 
     private fun continueStatement() = flowStatement(Statement::Continue, "continue")
 
-    private fun <T: Statement> flowStatement(ctor: () -> T, type: String): T {
+    private fun <T : Statement> flowStatement(ctor: () -> T, type: String): T {
         if (loopDepth == 0)
             error(previous(), "'$type' can only be used inside loops.")
 
@@ -374,7 +367,7 @@ class Parser(private val tokens: List<Token>, private val errorHandler: ErrorHan
 
             when (peek().type) {
                 TokenType.CLASS, TokenType.FUN, TokenType.VAR, TokenType.FOR, TokenType.IF,
-                TokenType.WHILE, TokenType.PRINT, TokenType.RETURN -> return
+                TokenType.WHILE, TokenType.RETURN -> return
                 else -> {
                 }
             }

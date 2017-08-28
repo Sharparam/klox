@@ -20,6 +20,16 @@ class Interpreter(private val errorHandler: ErrorHandler) : Expression.Visitor<A
                 return System.currentTimeMillis() / 1000.0
             }
         })
+
+        environment.define("print", object : LoxCallable {
+            override val arity: Int
+                get() = 1
+
+            override fun invoke(interpreter: Interpreter, arguments: Iterable<Any?>): Any? {
+                println(arguments.first().stringify())
+                return null
+            }
+        })
     }
 
     fun interpret(stmts: List<Statement>) {
@@ -49,8 +59,6 @@ class Interpreter(private val errorHandler: ErrorHandler) : Expression.Visitor<A
             stmt.elseStmt != null -> stmt.elseStmt.execute()
         }
     }
-
-    override fun visit(stmt: Statement.Print) = println(stmt.expression.evaluate().stringify())
 
     override fun visit(stmt: Statement.Return) {
         val value = if (stmt.value == null) null else stmt.value.evaluate()
