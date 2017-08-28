@@ -54,7 +54,7 @@ class Scanner(private val source: String, private val errorHandler: ErrorHandler
             '-' -> addToken(if (match('=')) TokenType.MINUS_EQUAL else TokenType.MINUS)
             '+' -> addToken(if (match('=')) TokenType.PLUS_EQUAL else TokenType.PLUS)
             ';' -> addToken(TokenType.SEMICOLON)
-            '*' -> addToken(TokenType.STAR)
+            '*' -> addToken(if (match('=')) TokenType.STAR_EQUAL else TokenType.STAR)
             '?' -> addToken(TokenType.QUESTION)
             ':' -> addToken(TokenType.COLON)
 
@@ -65,6 +65,7 @@ class Scanner(private val source: String, private val errorHandler: ErrorHandler
 
             '/' -> {
                 when {
+                    match('=') -> addToken(TokenType.SLASH_EQUAL)
                     match('/') -> {
                         while (peek() != '\n' && !isAtEnd)
                             advance()
