@@ -22,6 +22,9 @@
 
 package com.sharparam.klox
 
+import com.sharparam.klox.functions.*
+import com.sharparam.klox.util.stringify
+
 class Interpreter(private val errorHandler: ErrorHandler) : Expression.Visitor<Any?>, Statement.Visitor<Unit> {
     internal val globals = Environment()
 
@@ -34,60 +37,12 @@ class Interpreter(private val errorHandler: ErrorHandler) : Expression.Visitor<A
     }
 
     init {
-        environment.define("type", object : LoxCallable {
-            override val arity: Int
-                get() = 1
-
-            override fun invoke(interpreter: Interpreter, arguments: Iterable<Any?>): Any? {
-                return arguments.first().loxType
-            }
-        })
-
-        environment.define("clock", object : LoxCallable {
-            override val arity: Int
-                get() = 0
-
-            override fun invoke(interpreter: Interpreter, arguments: Iterable<Any?>): Any? {
-                return System.currentTimeMillis() / 1000.0
-            }
-        })
-
-        environment.define("print", object : LoxCallable {
-            override val arity: Int
-                get() = 1
-
-            override fun invoke(interpreter: Interpreter, arguments: Iterable<Any?>): Any? {
-                println(arguments.first().stringify())
-                return null
-            }
-        })
-
-        environment.define("read", object : LoxCallable {
-            override val arity: Int
-                get() = 0
-
-            override fun invoke(interpreter: Interpreter, arguments: Iterable<Any?>): Any? {
-                return readLine()
-            }
-        })
-
-        environment.define("tonumber", object : LoxCallable {
-            override val arity: Int
-                get() = 1
-
-            override fun invoke(interpreter: Interpreter, arguments: Iterable<Any?>): Any? {
-                return arguments.first().toString().toDoubleOrNull()
-            }
-        })
-
-        environment.define("tostring", object : LoxCallable {
-            override val arity: Int
-                get() = 1
-
-            override fun invoke(interpreter: Interpreter, arguments: Iterable<Any?>): Any? {
-                return arguments.first().stringify()
-            }
-        })
+        environment.define(TypeFunction.NAME, TypeFunction())
+        environment.define(ClockFunction.NAME, ClockFunction())
+        environment.define(PrintFunction.NAME, PrintFunction())
+        environment.define(ReadFunction.NAME, ReadFunction())
+        environment.define(ToNumberFunction.NAME, ToNumberFunction())
+        environment.define(ToStringFunction.NAME, ToStringFunction())
     }
 
     fun interpret(stmts: List<Statement>) {
@@ -299,27 +254,4 @@ class Interpreter(private val errorHandler: ErrorHandler) : Expression.Visitor<A
     private fun Expression.evaluate() = accept(this@Interpreter)
 
     private fun Iterable<Expression>.evaluate() = map { it.evaluate() }
-
-    private fun Any?.stringify(): String = when (this) {
-        null -> "nil"
-
-        is Double -> {
-            val text = this.toString()
-            if (text.endsWith(".0"))
-                text.substring(0, text.length - 2)
-            else
-                text
-        }
-
-        else -> this.toString()
-    }
-
-    private val Any?.loxType: String get() = when (this) {
-        is String -> "string"
-        is Double -> "number"
-        is Boolean -> "bool"
-        is LoxCallable -> "function"
-        null -> "nil"
-        else -> "undefined"
-    }
 }
