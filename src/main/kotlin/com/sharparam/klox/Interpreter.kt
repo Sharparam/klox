@@ -37,12 +37,12 @@ class Interpreter(private val errorHandler: ErrorHandler) : Expression.Visitor<A
     }
 
     init {
-        environment.define(TypeFunction.NAME, TypeFunction())
-        environment.define(ClockFunction.NAME, ClockFunction())
-        environment.define(PrintFunction.NAME, PrintFunction())
-        environment.define(ReadFunction.NAME, ReadFunction())
-        environment.define(ToNumberFunction.NAME, ToNumberFunction())
-        environment.define(ToStringFunction.NAME, ToStringFunction())
+        globals.define(TypeFunction.NAME, TypeFunction())
+        globals.define(ClockFunction.NAME, ClockFunction())
+        globals.define(PrintFunction.NAME, PrintFunction())
+        globals.define(ReadFunction.NAME, ReadFunction())
+        globals.define(ToNumberFunction.NAME, ToNumberFunction())
+        globals.define(ToStringFunction.NAME, ToStringFunction())
     }
 
     fun interpret(stmts: List<Statement>) {
