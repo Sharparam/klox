@@ -39,11 +39,13 @@ class Resolver(private val interpreter: Interpreter, private val errorHandler: E
     }
 
     override fun visit(expr: Expression.Function) {
-        TODO("not implemented") //To change body of created functions use File | Settings | File Templates.
+        expr.resolveFunction(FunctionType.FUNCTION)
     }
 
     override fun visit(expr: Expression.Conditional) {
-        TODO("not implemented") //To change body of created functions use File | Settings | File Templates.
+        expr.expression.resolve()
+        expr.truthy.resolve()
+        expr.falsey.resolve()
     }
 
     override fun visit(stmt: Statement.Expression) = stmt.resolve()
@@ -51,7 +53,7 @@ class Resolver(private val interpreter: Interpreter, private val errorHandler: E
     override fun visit(stmt: Statement.Function) {
         stmt.name.declare()
         stmt.name.define()
-        stmt.resolveFunction(FunctionType.FUNCTION)
+        stmt.function.resolveFunction(FunctionType.FUNCTION)
     }
 
     override fun visit(stmt: Statement.If) {
@@ -124,15 +126,15 @@ class Resolver(private val interpreter: Interpreter, private val errorHandler: E
         }
     }
 
-    private fun Statement.Function.resolveFunction(type: FunctionType) {
+    private fun Expression.Function.resolveFunction(type: FunctionType) {
         beginScope()
 
-        function.parameters.forEach {
+        parameters.forEach {
             it.declare()
             it.define()
         }
 
-        function.body.resolve()
+        body.resolve()
         endScope()
     }
 }
