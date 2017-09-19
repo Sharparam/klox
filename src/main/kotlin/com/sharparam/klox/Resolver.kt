@@ -52,7 +52,7 @@ class Resolver(private val interpreter: Interpreter, private val errorHandler: E
         expr.falsey.resolve()
     }
 
-    override fun visit(stmt: Statement.Expression) = stmt.resolve()
+    override fun visit(stmt: Statement.Expression) = stmt.expression.resolve()
 
     override fun visit(stmt: Statement.Function) {
         stmt.name.declare()
