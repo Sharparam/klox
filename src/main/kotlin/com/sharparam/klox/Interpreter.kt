@@ -28,6 +28,8 @@ import com.sharparam.klox.util.stringify
 class Interpreter(private val errorHandler: ErrorHandler) : Expression.Visitor<Any?>, Statement.Visitor<Unit> {
     internal val globals = Environment()
 
+    private val locals = HashMap<Expression, Int>()
+
     private var environment = globals
 
     private val Any?.isTruthy: Boolean get() = when (this) {
@@ -57,6 +59,10 @@ class Interpreter(private val errorHandler: ErrorHandler) : Expression.Visitor<A
 
     fun execute(stmts: Iterable<Statement>, env: Environment) {
         stmts.execute(env)
+    }
+
+    fun resolve(expr: Expression, depth: Int) {
+        locals.put(expr, depth)
     }
 
     override fun visit(stmt: Statement.Expression) {
@@ -110,7 +116,13 @@ class Interpreter(private val errorHandler: ErrorHandler) : Expression.Visitor<A
 
     override fun visit(expr: Expression.Assignment): Any? {
         val value = expr.value.evaluate()
-        environment.assign(expr.name, value)
+        val dist = locals[expr]
+
+        when (dist) {
+            null -> globals.assign(expr.name, value)
+            else -> environment.assignAt(dist, expr.name, value)
+        }
+
         return value
     }
 
@@ -218,7 +230,7 @@ class Interpreter(private val errorHandler: ErrorHandler) : Expression.Visitor<A
         }
     }
 
-    override fun visit(expr: Expression.Variable) = environment[expr.name]
+    override fun visit(expr: Expression.Variable) = lookUpVariable(expr.name, expr)
 
     override fun visit(expr: Expression.Conditional) =
             if (expr.expression.evaluate().isTruthy)
@@ -233,6 +245,14 @@ class Interpreter(private val errorHandler: ErrorHandler) : Expression.Visitor<A
             return
 
         throw RuntimeError(operator, "Operands must be numbers.")
+    }
+
+    private fun lookUpVariable(name: Token, expr: Expression): Any? {
+        val dist = locals[expr]
+        return when (dist) {
+            null -> globals[name]
+            else -> environment.getAt(dist, name)
+        }
     }
 
     private fun Statement.execute() = accept(this@Interpreter)

@@ -115,6 +115,12 @@ private fun run(code: String, isPrompt: Boolean = false) {
     if (errorHandler.hadError)
         return
 
+    val resolver = Resolver(interpreter, errorHandler)
+    resolver.resolve(statements)
+
+    if (errorHandler.hadError)
+        return
+
     if (isPrompt) {
         statements.forEach {
             if (it is Statement.Expression)

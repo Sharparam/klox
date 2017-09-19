@@ -5,6 +5,10 @@ import java.util.*
 class Resolver(private val interpreter: Interpreter, private val errorHandler: ErrorHandler) : Expression.Visitor<Unit>, Statement.Visitor<Unit> {
     private val scopes: Stack<MutableMap<String, Boolean>> = Stack()
 
+    private var currentFunction = FunctionType.NONE
+
+    fun resolve(statements: Iterable<Statement>) = statements.resolve()
+
     override fun visit(expr: Expression.Assignment) {
         expr.value.resolve()
         expr.resolveLocal(expr.name)
@@ -69,6 +73,9 @@ class Resolver(private val interpreter: Interpreter, private val errorHandler: E
     }
 
     override fun visit(stmt: Statement.Return) {
+        if (currentFunction == FunctionType.NONE)
+            errorHandler.resolveError(stmt.keyword, "Cannot return from top-level code.")
+
         stmt.value?.resolve()
     }
 
@@ -99,8 +106,15 @@ class Resolver(private val interpreter: Interpreter, private val errorHandler: E
     private fun endScope() = scopes.pop()
 
     private fun Token.declare() {
-        if (!scopes.empty())
-            scopes.peek().put(lexeme, false)
+        if (scopes.empty())
+            return
+
+        val scope = scopes.peek()
+
+        if (scope.contains(lexeme))
+            errorHandler.resolveError(this, "Variable '$lexeme' already declared in this scope.")
+
+        scope.put(lexeme, false)
     }
 
     private fun Token.define() {
@@ -108,6 +122,7 @@ class Resolver(private val interpreter: Interpreter, private val errorHandler: E
             scopes.peek().put(lexeme, true)
     }
 
+    @JvmName("resolveStatements")
     private fun Iterable<Statement>.resolve() = forEach { it.resolve() }
 
     private fun Statement.resolve() = accept(this@Resolver)
@@ -127,6 +142,9 @@ class Resolver(private val interpreter: Interpreter, private val errorHandler: E
     }
 
     private fun Expression.Function.resolveFunction(type: FunctionType) {
+        val enclosingFunction = currentFunction
+        currentFunction = type
+
         beginScope()
 
         parameters.forEach {
@@ -136,5 +154,12 @@ class Resolver(private val interpreter: Interpreter, private val errorHandler: E
 
         body.resolve()
         endScope()
+
+        currentFunction = enclosingFunction
+    }
+
+    private enum class FunctionType {
+        NONE,
+        FUNCTION
     }
 }
