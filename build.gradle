@@ -20,9 +20,6 @@
  * SOFTWARE.
  */
 
-group 'com.sharparam.klox'
-version '1.0-SNAPSHOT'
-
 buildscript {
     ext.kotlin_version = '1.2.10'
     ext.slf4j_version = '1.7.+'
@@ -36,6 +33,9 @@ buildscript {
         classpath "org.jetbrains.kotlin:kotlin-gradle-plugin:$kotlin_version"
     }
 }
+
+group 'com.sharparam.klox'
+version '1.0-SNAPSHOT'
 
 apply plugin: 'java'
 apply plugin: 'kotlin'
