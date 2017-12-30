@@ -22,8 +22,13 @@
 
 package com.sharparam.klox
 
+import com.sharparam.klox.functions.*
+import com.sharparam.klox.util.stringify
+
 class Interpreter(private val errorHandler: ErrorHandler) : Expression.Visitor<Any?>, Statement.Visitor<Unit> {
     internal val globals = Environment()
+
+    private val locals = HashMap<Expression, Int>()
 
     private var environment = globals
 
@@ -34,60 +39,12 @@ class Interpreter(private val errorHandler: ErrorHandler) : Expression.Visitor<A
     }
 
     init {
-        environment.define("type", object : LoxCallable {
-            override val arity: Int
-                get() = 1
-
-            override fun invoke(interpreter: Interpreter, arguments: Iterable<Any?>): Any? {
-                return arguments.first().loxType
-            }
-        })
-
-        environment.define("clock", object : LoxCallable {
-            override val arity: Int
-                get() = 0
-
-            override fun invoke(interpreter: Interpreter, arguments: Iterable<Any?>): Any? {
-                return System.currentTimeMillis() / 1000.0
-            }
-        })
-
-        environment.define("print", object : LoxCallable {
-            override val arity: Int
-                get() = 1
-
-            override fun invoke(interpreter: Interpreter, arguments: Iterable<Any?>): Any? {
-                println(arguments.first().stringify())
-                return null
-            }
-        })
-
-        environment.define("read", object : LoxCallable {
-            override val arity: Int
-                get() = 0
-
-            override fun invoke(interpreter: Interpreter, arguments: Iterable<Any?>): Any? {
-                return readLine()
-            }
-        })
-
-        environment.define("tonumber", object : LoxCallable {
-            override val arity: Int
-                get() = 1
-
-            override fun invoke(interpreter: Interpreter, arguments: Iterable<Any?>): Any? {
-                return arguments.first().toString().toDoubleOrNull()
-            }
-        })
-
-        environment.define("tostring", object : LoxCallable {
-            override val arity: Int
-                get() = 1
-
-            override fun invoke(interpreter: Interpreter, arguments: Iterable<Any?>): Any? {
-                return arguments.first().stringify()
-            }
-        })
+        globals.define(TypeFunction.NAME, TypeFunction())
+        globals.define(ClockFunction.NAME, ClockFunction())
+        globals.define(PrintFunction.NAME, PrintFunction())
+        globals.define(ReadFunction.NAME, ReadFunction())
+        globals.define(ToNumberFunction.NAME, ToNumberFunction())
+        globals.define(ToStringFunction.NAME, ToStringFunction())
     }
 
     fun interpret(stmts: List<Statement>) {
@@ -102,6 +59,10 @@ class Interpreter(private val errorHandler: ErrorHandler) : Expression.Visitor<A
 
     fun execute(stmts: Iterable<Statement>, env: Environment) {
         stmts.execute(env)
+    }
+
+    fun resolve(expr: Expression, depth: Int) {
+        locals.put(expr, depth)
     }
 
     override fun visit(stmt: Statement.Expression) {
@@ -155,7 +116,13 @@ class Interpreter(private val errorHandler: ErrorHandler) : Expression.Visitor<A
 
     override fun visit(expr: Expression.Assignment): Any? {
         val value = expr.value.evaluate()
-        environment.assign(expr.name, value)
+        val dist = locals[expr]
+
+        when (dist) {
+            null -> globals.assign(expr.name, value)
+            else -> environment.assignAt(dist, expr.name, value)
+        }
+
         return value
     }
 
@@ -263,7 +230,7 @@ class Interpreter(private val errorHandler: ErrorHandler) : Expression.Visitor<A
         }
     }
 
-    override fun visit(expr: Expression.Variable) = environment[expr.name]
+    override fun visit(expr: Expression.Variable) = lookUpVariable(expr.name, expr)
 
     override fun visit(expr: Expression.Conditional) =
             if (expr.expression.evaluate().isTruthy)
@@ -278,6 +245,14 @@ class Interpreter(private val errorHandler: ErrorHandler) : Expression.Visitor<A
             return
 
         throw RuntimeError(operator, "Operands must be numbers.")
+    }
+
+    private fun lookUpVariable(name: Token, expr: Expression): Any? {
+        val dist = locals[expr]
+        return when (dist) {
+            null -> globals[name]
+            else -> environment.getAt(dist, name)
+        }
     }
 
     private fun Statement.execute() = accept(this@Interpreter)
@@ -299,27 +274,4 @@ class Interpreter(private val errorHandler: ErrorHandler) : Expression.Visitor<A
     private fun Expression.evaluate() = accept(this@Interpreter)
 
     private fun Iterable<Expression>.evaluate() = map { it.evaluate() }
-
-    private fun Any?.stringify(): String = when (this) {
-        null -> "nil"
-
-        is Double -> {
-            val text = this.toString()
-            if (text.endsWith(".0"))
-                text.substring(0, text.length - 2)
-            else
-                text
-        }
-
-        else -> this.toString()
-    }
-
-    private val Any?.loxType: String get() = when (this) {
-        is String -> "string"
-        is Double -> "number"
-        is Boolean -> "bool"
-        is LoxCallable -> "function"
-        null -> "nil"
-        else -> "undefined"
-    }
 }

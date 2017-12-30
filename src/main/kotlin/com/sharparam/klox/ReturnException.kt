@@ -22,4 +22,4 @@
 
 package com.sharparam.klox
 
-class ReturnException(val value: Any?): RuntimeException(null, null, false, false)
+internal class ReturnException(val value: Any?): KloxError(null, null, false, false)

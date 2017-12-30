@@ -33,6 +33,8 @@ interface ErrorHandler {
 
     fun parseError(token: Token, message: String)
 
+    fun resolveError(token: Token, message: String)
+
     fun runtimeError(e: RuntimeError)
 
     fun resetError()

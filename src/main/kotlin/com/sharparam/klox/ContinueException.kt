@@ -22,4 +22,4 @@
 
 package com.sharparam.klox
 
-class ContinueException: RuntimeException(null, null, false, false)
+internal class ContinueException: KloxError(null, null, false, false)

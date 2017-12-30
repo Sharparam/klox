@@ -22,6 +22,8 @@
 
 package com.sharparam.klox
 
+import kotlin.repeat
+
 class Environment(private val parent: Environment? = null) {
     private val env = HashMap<String, Any?>()
 
@@ -37,6 +39,17 @@ class Environment(private val parent: Environment? = null) {
         throw RuntimeError(name, "Undefined variable '${name.lexeme}'.")
     }
 
+    fun getAt(distance: Int, name: Token): Any? {
+        var environment: Environment = this
+        repeat(distance) {
+            if (environment.parent == null)
+                throw KloxError("Environment parent was NULL during resolve")
+
+            environment = environment.parent!!
+        }
+        return environment[name]
+    }
+
     fun define(name: Token, value: Any?) = define(name.lexeme, value)
 
     fun define(key: String, value: Any?) = env.set(key, value)
@@ -45,6 +58,17 @@ class Environment(private val parent: Environment? = null) {
         env.containsKey(name.lexeme) -> this[name] = value
         parent != null -> parent.assign(name, value)
         else -> throw RuntimeError(name, "Undefined variable '${name.lexeme}'.")
+    }
+
+    fun assignAt(distance: Int, name: Token, value: Any?) {
+        var environment = this
+        repeat(distance) {
+            if (environment.parent == null)
+                throw KloxError("Environment parent was NULL during resolve")
+
+            environment = environment.parent!!
+        }
+        environment.assign(name, value)
     }
 
     private operator fun set(name: Token, value: Any?) = env.set(name.lexeme, value)

@@ -48,6 +48,10 @@ private val errorHandler = object: ErrorHandler {
         else -> report(token.line, token.column, " at '${token.lexeme}'", message)
     }
 
+    override fun resolveError(token: Token, message: String) {
+        report(token.line, token.column, " in ${token.type}", message)
+    }
+
     override fun runtimeError(e: RuntimeError) {
         System.err.println("${e.message ?: "Unknown error"} [${e.token.line}:${e.token.column}]")
         hadRuntimeError = true
@@ -107,6 +111,12 @@ private fun run(code: String, isPrompt: Boolean = false) {
     val tokens = scanner.scanTokens()
     val parser = Parser(tokens, errorHandler)
     val statements = parser.parse()
+
+    if (errorHandler.hadError)
+        return
+
+    val resolver = Resolver(interpreter, errorHandler)
+    resolver.resolve(statements)
 
     if (errorHandler.hadError)
         return
