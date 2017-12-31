@@ -1,0 +1,7 @@
+for (var c = 10; c > 0; c -= 1) {
+  print(tostring(c) + "...");
+  sleep(1000);
+}
+
+print("Happy new year!");
+
