@@ -1,0 +1,22 @@
+class Person {
+    init(name) {
+        this.name = name;
+    }
+
+    speak() {
+        print("Hello, my name is " + this.name);
+    }
+
+    greet(other) {
+        print("Hello " + other.name + ", my name is " + this.name);
+    }
+}
+
+var alice = Person("Alice");
+alice.speak();
+
+var bob = Person("Bob");
+bob.speak();
+
+alice.greet(bob);
+bob.greet(alice);

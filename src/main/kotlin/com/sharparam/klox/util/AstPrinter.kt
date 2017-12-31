@@ -29,6 +29,12 @@ class AstPrinter: Expression.Visitor<String> {
 
     override fun visit(expr: Expression.Assignment) = parenthesize("assign '${expr.name.lexeme}'", expr.value)
 
+    override fun visit(expr: Expression.Get) = parenthesize("get '${expr.name.lexeme}'")
+
+    override fun visit(expr: Expression.Set) = parenthesize("set '${expr.name.lexeme}'", expr.value)
+
+    override fun visit(expr: Expression.This) = "this"
+
     override fun visit(expr: Expression.Binary) = parenthesize(expr.operator.lexeme, expr.left, expr.right)
 
     override fun visit(expr: Expression.Call): String {

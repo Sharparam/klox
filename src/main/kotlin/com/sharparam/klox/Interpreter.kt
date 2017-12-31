@@ -23,10 +23,14 @@
 package com.sharparam.klox
 
 import com.sharparam.klox.functions.*
+import com.sharparam.klox.util.logger
 import com.sharparam.klox.util.stringify
+import com.sharparam.klox.util.toMap
 
 class Interpreter(private val errorHandler: ErrorHandler) : Expression.Visitor<Any?>, Statement.Visitor<Unit> {
     internal val globals = Environment()
+
+    private val log by logger()
 
     private val locals = HashMap<Expression, Int>()
 
@@ -39,12 +43,14 @@ class Interpreter(private val errorHandler: ErrorHandler) : Expression.Visitor<A
     }
 
     init {
+        log.debug("Initializing")
         globals.define(TypeFunction.NAME, TypeFunction())
         globals.define(ClockFunction.NAME, ClockFunction())
         globals.define(PrintFunction.NAME, PrintFunction())
         globals.define(ReadFunction.NAME, ReadFunction())
         globals.define(ToNumberFunction.NAME, ToNumberFunction())
         globals.define(ToStringFunction.NAME, ToStringFunction())
+        globals.define(SleepFunction.NAME, SleepFunction())
     }
 
     fun interpret(stmts: List<Statement>) {
@@ -69,6 +75,16 @@ class Interpreter(private val errorHandler: ErrorHandler) : Expression.Visitor<A
         stmt.expression.evaluate()
     }
 
+    override fun visit(stmt: Statement.Class) {
+        environment.define(stmt.name, null)
+        log.trace("Declaring class {} with {} methods", stmt.name.lexeme, stmt.methods.count())
+        val methods = stmt.methods.toMap({ it.name.lexeme }) {
+            LoxFunction(it.function, environment, it.name.lexeme, it.name.lexeme == "init")
+        }
+        val cls = LoxClass(stmt.name.lexeme, methods)
+        environment.assign(stmt.name, cls)
+    }
+
     override fun visit(stmt: Statement.Function) =
             environment.define(stmt.name, LoxFunction(stmt.function, environment, stmt.name.lexeme))
 
@@ -81,6 +97,7 @@ class Interpreter(private val errorHandler: ErrorHandler) : Expression.Visitor<A
 
     override fun visit(stmt: Statement.Return) {
         val value = if (stmt.value == null) null else stmt.value.evaluate()
+        log.trace("Returning {}", value)
         throw ReturnException(value)
     }
 
@@ -200,6 +217,27 @@ class Interpreter(private val errorHandler: ErrorHandler) : Expression.Visitor<A
         return callee(this, arguments)
     }
 
+    override fun visit(expr: Expression.Get): Any? {
+        val target = expr.target.evaluate()
+
+        if (target is LoxInstance) {
+            return target[expr.name]
+        }
+
+        throw RuntimeError(expr.name, "Only class instances have properties.")
+    }
+
+    override fun visit(expr: Expression.Set): Any? {
+        val target = expr.target.evaluate() as? LoxInstance ?:
+                throw RuntimeError(expr.name, "Only class instances have fields.")
+
+        val value = expr.value.evaluate()
+        target[expr.name] = value
+        return value
+    }
+
+    override fun visit(expr: Expression.This) = expr.lookUpVariable(expr.keyword)
+
     override fun visit(expr: Expression.Grouping) = expr.expression.evaluate()
 
     override fun visit(expr: Expression.Literal) = expr.value
@@ -230,7 +268,7 @@ class Interpreter(private val errorHandler: ErrorHandler) : Expression.Visitor<A
         }
     }
 
-    override fun visit(expr: Expression.Variable) = lookUpVariable(expr.name, expr)
+    override fun visit(expr: Expression.Variable) = expr.lookUpVariable(expr.name)
 
     override fun visit(expr: Expression.Conditional) =
             if (expr.expression.evaluate().isTruthy)
@@ -247,8 +285,8 @@ class Interpreter(private val errorHandler: ErrorHandler) : Expression.Visitor<A
         throw RuntimeError(operator, "Operands must be numbers.")
     }
 
-    private fun lookUpVariable(name: Token, expr: Expression): Any? {
-        val dist = locals[expr]
+    private fun Expression.lookUpVariable(name: Token): Any? {
+        val dist = locals[this]
         return when (dist) {
             null -> globals[name]
             else -> environment.getAt(dist, name)
@@ -259,6 +297,7 @@ class Interpreter(private val errorHandler: ErrorHandler) : Expression.Visitor<A
 
     private fun Iterable<Statement>.execute() = forEach { it.execute() }
 
+    @Suppress("unused")
     @JvmName("stmtsExecuteWithEnvExt")
     private fun Iterable<Statement>.execute(env: Environment) {
         val previousEnv = environment

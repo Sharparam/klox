@@ -1,11 +1,16 @@
 package com.sharparam.klox
 
+import com.sharparam.klox.util.logger
 import java.util.*
 
 class Resolver(private val interpreter: Interpreter, private val errorHandler: ErrorHandler) : Expression.Visitor<Unit>, Statement.Visitor<Unit> {
+    private val log by logger()
+
     private val scopes: Stack<MutableMap<String, Boolean>> = Stack()
 
     private var currentFunction = FunctionType.NONE
+
+    private var currentClassType = ClassType.NONE
 
     fun resolve(statements: Iterable<Statement>) = statements.resolve()
 
@@ -24,6 +29,13 @@ class Resolver(private val interpreter: Interpreter, private val errorHandler: E
         expr.arguments.resolve()
     }
 
+    override fun visit(expr: Expression.Get) = expr.target.resolve()
+
+    override fun visit(expr: Expression.Set) {
+        expr.value.resolve()
+        expr.target.resolve()
+    }
+
     override fun visit(expr: Expression.Grouping) = expr.expression.resolve()
 
     override fun visit(expr: Expression.Literal) {}
@@ -31,6 +43,13 @@ class Resolver(private val interpreter: Interpreter, private val errorHandler: E
     override fun visit(expr: Expression.Logical) {
         expr.left.resolve()
         expr.right.resolve()
+    }
+
+    override fun visit(expr: Expression.This) {
+        if (currentClassType == ClassType.NONE)
+            errorHandler.resolveError(expr.keyword, "Cannot use 'this' outside of class.")
+        else
+            expr.resolveLocal(expr.keyword)
     }
 
     override fun visit(expr: Expression.Unary) = expr.right.resolve()
@@ -54,6 +73,28 @@ class Resolver(private val interpreter: Interpreter, private val errorHandler: E
 
     override fun visit(stmt: Statement.Expression) = stmt.expression.resolve()
 
+    override fun visit(stmt: Statement.Class) {
+        stmt.name.declare()
+        stmt.name.define()
+
+        log.trace("--- CLASS {} ---", stmt.name.lexeme)
+
+        val enclosingClassType = currentClassType
+        currentClassType = ClassType.CLASS
+
+        scope {
+            it["this"] = true
+            stmt.methods.forEach {
+                it.function.resolveFunction(
+                        if (it.name.lexeme == "init") FunctionType.INITIALIZER else FunctionType.METHOD
+                )
+            }
+        }
+
+        currentClassType = enclosingClassType
+        log.trace("--- END CLASS {} ---", stmt.name.lexeme)
+    }
+
     override fun visit(stmt: Statement.Function) {
         stmt.name.declare()
         stmt.name.define()
@@ -75,6 +116,8 @@ class Resolver(private val interpreter: Interpreter, private val errorHandler: E
     override fun visit(stmt: Statement.Return) {
         if (currentFunction == FunctionType.NONE)
             errorHandler.resolveError(stmt.keyword, "Cannot return from top-level code.")
+        else if (currentFunction == FunctionType.INITIALIZER)
+            errorHandler.resolveError(stmt.keyword, "Cannot return from initializer.")
 
         stmt.value?.resolve()
     }
@@ -91,25 +134,35 @@ class Resolver(private val interpreter: Interpreter, private val errorHandler: E
         stmt.body.resolve()
     }
 
-    override fun visit(stmt: Statement.Block) {
-        beginScope()
-        stmt.statements.resolve()
-        endScope()
-    }
+    override fun visit(stmt: Statement.Block) = scope { stmt.statements.resolve() }
 
     override fun visit(stmt: Statement.Break) {}
 
     override fun visit(stmt: Statement.Continue) {}
 
-    private fun beginScope() = scopes.push(HashMap())
+    private fun beginScope() {
+        log.trace("--- BEGIN SCOPE ({}) ---", scopes.size + 1)
+        scopes.push(HashMap())
+    }
 
-    private fun endScope() = scopes.pop()
+    private fun endScope() {
+        scopes.pop()
+        log.trace("--- END SCOPE ({}) ---", scopes.size + 1)
+    }
+
+    private fun scope(block: (MutableMap<String, Boolean>) -> Unit) {
+        beginScope()
+        scopes.peek().apply(block)
+        endScope()
+    }
 
     private fun Token.declare() {
         if (scopes.empty())
             return
 
         val scope = scopes.peek()
+
+        log.trace("Declaring {} at scope level {}", lexeme, scopes.size)
 
         if (scope.contains(lexeme))
             errorHandler.resolveError(this, "Variable '$lexeme' already declared in this scope.")
@@ -118,15 +171,20 @@ class Resolver(private val interpreter: Interpreter, private val errorHandler: E
     }
 
     private fun Token.define() {
-        if (!scopes.empty())
-            scopes.peek().put(lexeme, true)
+        if (scopes.empty())
+            return
+
+        log.trace("Defining {} at scope level {}", lexeme, scopes.size)
+        scopes.peek().put(lexeme, true)
     }
 
+    @Suppress("unused")
     @JvmName("resolveStatements")
     private fun Iterable<Statement>.resolve() = forEach { it.resolve() }
 
     private fun Statement.resolve() = accept(this@Resolver)
 
+    @Suppress("unused")
     @JvmName("resolveExpressions")
     private fun Iterable<Expression>.resolve() = forEach { it.resolve() }
 
@@ -145,21 +203,27 @@ class Resolver(private val interpreter: Interpreter, private val errorHandler: E
         val enclosingFunction = currentFunction
         currentFunction = type
 
-        beginScope()
+        scope {
+            parameters.forEach {
+                it.declare()
+                it.define()
+            }
 
-        parameters.forEach {
-            it.declare()
-            it.define()
+            body.resolve()
         }
-
-        body.resolve()
-        endScope()
 
         currentFunction = enclosingFunction
     }
 
     private enum class FunctionType {
         NONE,
-        FUNCTION
+        FUNCTION,
+        INITIALIZER,
+        METHOD
+    }
+
+    private enum class ClassType {
+        NONE,
+        CLASS
     }
 }

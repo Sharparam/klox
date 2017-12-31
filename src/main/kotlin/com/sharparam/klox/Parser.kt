@@ -47,6 +47,7 @@ class Parser(private val tokens: List<Token>, private val errorHandler: ErrorHan
 
     private fun declaration() = try {
         when {
+            match(TokenType.CLASS) -> classDeclaration()
             check(TokenType.FUN) && checkNext(TokenType.IDENTIFIER) -> {
                 consume(TokenType.FUN, "Expected 'fun' to declare function.")
                 function("function")
@@ -59,7 +60,20 @@ class Parser(private val tokens: List<Token>, private val errorHandler: ErrorHan
         null
     }
 
-    private fun function(kind: String): Statement {
+    private fun classDeclaration(): Statement.Class {
+        val name = consume(TokenType.IDENTIFIER, "Expected class name.")
+        consume(TokenType.LEFT_BRACE, "Expected '{' before class body.")
+
+        val methods = ArrayList<Statement.Function>()
+        while (!check(TokenType.RIGHT_BRACE) && !isAtEnd) {
+            methods.add(function("method"))
+        }
+
+        consume(TokenType.RIGHT_BRACE, "Expected '}' after class body.")
+        return Statement.Class(name, methods)
+    }
+
+    private fun function(kind: String): Statement.Function {
         val name = consume(TokenType.IDENTIFIER, "Expected $kind name.")
 
         return Statement.Function(name, functionBody(kind))
@@ -84,7 +98,7 @@ class Parser(private val tokens: List<Token>, private val errorHandler: ErrorHan
         return Expression.Function(parameters, block())
     }
 
-    private fun varDeclaration(): Statement {
+    private fun varDeclaration(): Statement.Variable {
         val name = consume(TokenType.IDENTIFIER, "Expected variable name.")
 
         val initializer = if (match(TokenType.EQUAL)) expression() else Expression.Literal(null)
@@ -105,7 +119,7 @@ class Parser(private val tokens: List<Token>, private val errorHandler: ErrorHan
         else -> expressionStatement()
     }
 
-    private fun forStatement(): Statement {
+    private fun forStatement(): Statement.For {
         consume(TokenType.LEFT_PAREN, "Expected '(' after 'for'.")
 
         val init = when {
@@ -128,7 +142,7 @@ class Parser(private val tokens: List<Token>, private val errorHandler: ErrorHan
         }
     }
 
-    private fun ifStatement(): Statement {
+    private fun ifStatement(): Statement.If {
         consume(TokenType.LEFT_PAREN, "Expected '(' after 'if'.")
 
         val condition = expression()
@@ -141,7 +155,7 @@ class Parser(private val tokens: List<Token>, private val errorHandler: ErrorHan
         return Statement.If(condition, thenStmt, elseStmt)
     }
 
-    private fun returnStatement(): Statement {
+    private fun returnStatement(): Statement.Return {
         val keyword = previous()
 
         val value = if (check(TokenType.SEMICOLON)) null else expression()
@@ -149,7 +163,7 @@ class Parser(private val tokens: List<Token>, private val errorHandler: ErrorHan
         return Statement.Return(keyword, value)
     }
 
-    private fun whileStatement(): Statement {
+    private fun whileStatement(): Statement.While {
         consume(TokenType.LEFT_PAREN, "Expected '(' after 'while'.")
         val condition = expression()
         consume(TokenType.RIGHT_PAREN, "Expected ')' after condition.")
@@ -189,7 +203,7 @@ class Parser(private val tokens: List<Token>, private val errorHandler: ErrorHan
         return ctor()
     }
 
-    private fun expressionStatement(): Statement {
+    private fun expressionStatement(): Statement.Expression {
         val expr = expression()
         consume(TokenType.SEMICOLON, "Expected ';' after expression.")
         return Statement.Expression(expr)
@@ -207,32 +221,34 @@ class Parser(private val tokens: List<Token>, private val errorHandler: ErrorHan
             val equals = previous()
             val value = assignment()
 
-            if (expr is Expression.Variable) {
-                val name = expr.name
-                return Expression.Assignment(name, when (equals.type) {
-                    TokenType.PLUS_EQUAL -> Expression.Binary(
-                            expr,
-                            Token(TokenType.PLUS, "+", null, equals.line, equals.column),
-                            value
-                    )
-                    TokenType.MINUS_EQUAL -> Expression.Binary(
-                            expr,
-                            Token(TokenType.MINUS, "-", null, equals.line, equals.column),
-                            value
-                    )
-                    TokenType.STAR_EQUAL -> Expression.Binary(
-                            expr,
-                            Token(TokenType.STAR, "*", null, equals.line, equals.column),
-                            value
-                    )
-                    TokenType.SLASH_EQUAL -> Expression.Binary(
-                            expr,
-                            Token(TokenType.SLASH, "/", null, equals.line, equals.column),
-                            value
-                    )
-                    else -> value
-                })
+            val finalValue = when (equals.type) {
+                TokenType.PLUS_EQUAL -> Expression.Binary(
+                        expr,
+                        Token(TokenType.PLUS, "+", null, equals.line, equals.column),
+                        value
+                )
+                TokenType.MINUS_EQUAL -> Expression.Binary(
+                        expr,
+                        Token(TokenType.MINUS, "-", null, equals.line, equals.column),
+                        value
+                )
+                TokenType.STAR_EQUAL -> Expression.Binary(
+                        expr,
+                        Token(TokenType.STAR, "*", null, equals.line, equals.column),
+                        value
+                )
+                TokenType.SLASH_EQUAL -> Expression.Binary(
+                        expr,
+                        Token(TokenType.SLASH, "/", null, equals.line, equals.column),
+                        value
+                )
+                else -> value
             }
+
+            if (expr is Expression.Variable)
+                return Expression.Assignment(expr.name, finalValue)
+            else if (expr is Expression.Get)
+                return Expression.Set(expr.target, expr.name, finalValue)
 
             error(equals, "Invalid assignment target.")
         }
@@ -278,8 +294,16 @@ class Parser(private val tokens: List<Token>, private val errorHandler: ErrorHan
     private fun call(): Expression {
         var expr = primary()
 
-        while (match(TokenType.LEFT_PAREN))
-            expr = finishCall(expr)
+        loop@ while (true) {
+            expr = when {
+                match(TokenType.LEFT_PAREN) -> finishCall(expr)
+                match(TokenType.DOT) -> {
+                    val name = consume(TokenType.IDENTIFIER, "Expected property name after '.'.")
+                    Expression.Get(expr, name)
+                }
+                else -> break@loop
+            }
+        }
 
         return expr
     }
@@ -306,6 +330,7 @@ class Parser(private val tokens: List<Token>, private val errorHandler: ErrorHan
         match(TokenType.TRUE) -> Expression.Literal(true)
         match(TokenType.NIL) -> Expression.Literal(null)
         match(TokenType.NUMBER, TokenType.STRING) -> Expression.Literal(previous().literal)
+        match(TokenType.THIS) -> Expression.This(previous())
         match(TokenType.IDENTIFIER) -> Expression.Variable(previous())
         match(TokenType.FUN) -> functionBody("lambda")
 

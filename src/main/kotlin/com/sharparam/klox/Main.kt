@@ -53,7 +53,10 @@ private val errorHandler = object: ErrorHandler {
     }
 
     override fun runtimeError(e: RuntimeError) {
-        System.err.println("${e.message ?: "Unknown error"} [${e.token.line}:${e.token.column}]")
+        if (e.token == null)
+            System.err.println(e.message ?: "Unknown error")
+        else
+            System.err.println("${e.message ?: "Unknown error"} [${e.token.line}:${e.token.column}]")
         hadRuntimeError = true
     }
 
@@ -83,7 +86,7 @@ private fun runPrompt() {
     LOG.info("Welcome to klox, a REPL for Lox. Type code to evaluate it, or ':exit' to exit.")
     loop@ while (true) {
         print("> ")
-        val line = readLine()
+        var line = readLine()
         when (line) {
             null -> LOG.error("Input was NULL")
             ":exit" -> break@loop

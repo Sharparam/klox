@@ -20,6 +20,25 @@
  * SOFTWARE.
  */
 
-package com.sharparam.klox
+package com.sharparam.klox.functions
 
-class RuntimeError(val token: Token?, message: String): KloxError(message)
+import com.sharparam.klox.Interpreter
+import com.sharparam.klox.LoxCallable
+import com.sharparam.klox.RuntimeError
+
+class SleepFunction: LoxCallable {
+    override val arity = 1
+
+    override fun invoke(interpreter: Interpreter, arguments: Iterable<Any?>): Any? {
+        val duration = arguments.first().toString().toDoubleOrNull() ?:
+                throw RuntimeError(null, "Usage: sleep(milliseconds)")
+        val millis = Math.floor(duration).toLong()
+        val nanos = Math.floor((duration - millis) * 1000).toInt()
+        Thread.sleep(millis, nanos)
+        return null
+    }
+
+    companion object {
+        const val NAME = "sleep"
+    }
+}

@@ -20,6 +20,17 @@
  * SOFTWARE.
  */
 
-package com.sharparam.klox
+package com.sharparam.klox.util
 
-class RuntimeError(val token: Token?, message: String): KloxError(message)
+internal fun <TSource, TKey> Iterable<TSource>.toMap(
+        keySelector: (item: TSource) -> TKey
+): Map<TKey, TSource> = toMap(keySelector) { it }
+
+internal fun <TSource, TKey, TValue> Iterable<TSource>.toMap(
+        keySelector: (item: TSource) -> TKey,
+        valueSelector: (item: TSource) -> TValue
+): Map<TKey, TValue> {
+    val map = HashMap<TKey, TValue>()
+    forEach { map[keySelector(it)] = valueSelector(it) }
+    return map
+}

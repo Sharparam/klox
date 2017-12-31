@@ -39,7 +39,7 @@ class Environment(private val parent: Environment? = null) {
         throw RuntimeError(name, "Undefined variable '${name.lexeme}'.")
     }
 
-    fun getAt(distance: Int, name: Token): Any? {
+    fun getAt(distance: Int, key: String): Any? {
         var environment: Environment = this
         repeat(distance) {
             if (environment.parent == null)
@@ -47,8 +47,10 @@ class Environment(private val parent: Environment? = null) {
 
             environment = environment.parent!!
         }
-        return environment[name]
+        return environment[key]
     }
+
+    fun getAt(distance: Int, name: Token) = getAt(distance, name.lexeme)
 
     fun define(name: Token, value: Any?) = define(name.lexeme, value)
 

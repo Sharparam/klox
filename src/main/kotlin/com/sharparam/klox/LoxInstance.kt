@@ -22,4 +22,20 @@
 
 package com.sharparam.klox
 
-class RuntimeError(val token: Token?, message: String): KloxError(message)
+class LoxInstance(private val klass: LoxClass) {
+    private val fields = HashMap<String, Any?>()
+
+    operator fun get(name: Token): Any? {
+        if (fields.containsKey(name.lexeme))
+            return fields[name.lexeme]
+
+        if (klass.hasMethod(name.lexeme))
+            return klass.getMethod(name.lexeme, this)
+
+        throw RuntimeError(name, "Undefined property '${name.lexeme}'.")
+    }
+
+    operator fun set(name: Token, value: Any?) = fields.set(name.lexeme, value)
+
+    override fun toString() = "<${klass.name} instance>"
+}

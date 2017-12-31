@@ -5,12 +5,10 @@ import com.sharparam.klox.LoxCallable
 import com.sharparam.klox.util.loxType
 
 class TypeFunction : LoxCallable {
-    override val arity: Int
-        get() = 1
+    override val arity = 1
 
-    override fun invoke(interpreter: Interpreter, arguments: Iterable<Any?>): Any? {
-        return arguments.first().loxType
-    }
+    override fun invoke(interpreter: Interpreter, arguments: Iterable<Any?>) =
+            arguments.first().loxType
 
     companion object {
         const val NAME = "type"

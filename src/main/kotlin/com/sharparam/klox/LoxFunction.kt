@@ -25,7 +25,8 @@ package com.sharparam.klox
 class LoxFunction(
         private val function: Expression.Function,
         private val closure: Environment,
-        private val name: String? = null
+        private val name: String? = null,
+        private val isInitializer: Boolean = false
 ): LoxCallable {
     override val arity: Int
         get() = function.parameters.count()
@@ -43,7 +44,13 @@ class LoxFunction(
             return e.value
         }
 
-        return null
+        return if (isInitializer) closure.getAt(0, "this") else null
+    }
+
+    fun bind(instance: LoxInstance): LoxFunction {
+        val environment = Environment(closure)
+        environment.define("this", instance)
+        return LoxFunction(function, environment, name, isInitializer)
     }
 
     override fun toString() = if (name == null) "<fun>" else "<fun $name>"

@@ -22,4 +22,19 @@
 
 package com.sharparam.klox
 
-class RuntimeError(val token: Token?, message: String): KloxError(message)
+class LoxClass(val name: String, private val methods: Map<String, LoxFunction>): LoxCallable {
+    override val arity: Int = methods["init"]?.arity ?: 0
+
+    override fun invoke(interpreter: Interpreter, arguments: Iterable<Any?>): Any? {
+        val instance = LoxInstance(this)
+        if (hasMethod("init"))
+            getMethod("init", instance)?.invoke(interpreter, arguments)
+        return instance
+    }
+
+    fun hasMethod(key: String) = methods.containsKey(key)
+
+    fun getMethod(key: String, instance: LoxInstance) = methods[key]?.bind(instance)
+
+    override fun toString() = "<class $name>"
+}
