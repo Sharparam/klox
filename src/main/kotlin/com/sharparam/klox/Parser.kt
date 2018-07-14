@@ -62,6 +62,15 @@ class Parser(private val tokens: List<Token>, private val errorHandler: ErrorHan
 
     private fun classDeclaration(): Statement.Class {
         val name = consume(TokenType.IDENTIFIER, "Expected class name.")
+
+        val superclass = when {
+            match(TokenType.LESS) -> {
+                consume(TokenType.IDENTIFIER, "Expected superclass name.")
+                Expression.Variable(previous())
+            }
+            else -> null
+        }
+
         consume(TokenType.LEFT_BRACE, "Expected '{' before class body.")
 
         val methods = ArrayList<Statement.Function>()
@@ -70,7 +79,7 @@ class Parser(private val tokens: List<Token>, private val errorHandler: ErrorHan
         }
 
         consume(TokenType.RIGHT_BRACE, "Expected '}' after class body.")
-        return Statement.Class(name, methods)
+        return Statement.Class(name, superclass, methods)
     }
 
     private fun function(kind: String): Statement.Function {
@@ -330,6 +339,14 @@ class Parser(private val tokens: List<Token>, private val errorHandler: ErrorHan
         match(TokenType.TRUE) -> Expression.Literal(true)
         match(TokenType.NIL) -> Expression.Literal(null)
         match(TokenType.NUMBER, TokenType.STRING) -> Expression.Literal(previous().literal)
+
+        match(TokenType.SUPER) -> {
+            val keyword = previous()
+            consume(TokenType.DOT, "Expected '.' after 'super'.")
+            val method = consume(TokenType.IDENTIFIER, "Expected superclass method name.")
+            Expression.Super(keyword, method)
+        }
+
         match(TokenType.THIS) -> Expression.This(previous())
         match(TokenType.IDENTIFIER) -> Expression.Variable(previous())
         match(TokenType.FUN) -> functionBody("lambda")

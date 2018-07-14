@@ -57,6 +57,10 @@ abstract class Expression {
         override fun <T> accept(visitor: Visitor<T>) = visitor.visit(this)
     }
 
+    class Super(val keyword: Token, val method: Token): Expression() {
+        override fun <T> accept(visitor: Visitor<T>) = visitor.visit(this)
+    }
+
     class This(val keyword: Token): Expression() {
         override fun <T> accept(visitor: Visitor<T>) = visitor.visit(this)
     }
@@ -86,6 +90,7 @@ abstract class Expression {
         fun visit(expr: Literal): T
         fun visit(expr: Logical): T
         fun visit(expr: Set): T
+        fun visit(expr: Super): T
         fun visit(expr: This): T
         fun visit(expr: Unary): T
         fun visit(expr: Variable): T

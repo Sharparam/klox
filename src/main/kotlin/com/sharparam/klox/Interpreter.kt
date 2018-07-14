@@ -76,12 +76,33 @@ class Interpreter(private val errorHandler: ErrorHandler) : Expression.Visitor<A
     }
 
     override fun visit(stmt: Statement.Class) {
+        var superclass: Any? = null
+
+        if (stmt.superclass != null) {
+            superclass = stmt.superclass.evaluate()
+
+            if (superclass !is LoxClass) {
+                throw RuntimeError(stmt.superclass.name, "Superclass must be a class.")
+            }
+        }
+
         environment.define(stmt.name, null)
+
+        if (superclass != null) {
+            environment = Environment(environment)
+            environment.define("super", superclass)
+        }
+
         log.trace("Declaring class {} with {} methods", stmt.name.lexeme, stmt.methods.count())
         val methods = stmt.methods.toMap({ it.name.lexeme }) {
             LoxFunction(it.function, environment, it.name.lexeme, it.name.lexeme == "init")
         }
-        val cls = LoxClass(stmt.name.lexeme, methods)
+
+        val cls = LoxClass(stmt.name.lexeme, superclass as LoxClass?, methods)
+
+        if (superclass != null)
+            environment = environment.parent!!
+
         environment.assign(stmt.name, cls)
     }
 
@@ -237,6 +258,15 @@ class Interpreter(private val errorHandler: ErrorHandler) : Expression.Visitor<A
     }
 
     override fun visit(expr: Expression.This) = expr.lookUpVariable(expr.keyword)
+
+    override fun visit(expr: Expression.Super): Any? {
+        val distance = locals[expr] ?: throw RuntimeError(expr.keyword, "Failed to get variable distance for 'super'.")
+        val superclass = environment.getAt(distance, "super") as LoxClass
+        val instance = environment.getAt(distance - 1, "this") as LoxInstance
+
+        return superclass.getMethod(expr.method.lexeme, instance)
+                ?: throw RuntimeError(expr.method, "Undefined property '${expr.method.lexeme}'.")
+    }
 
     override fun visit(expr: Expression.Grouping) = expr.expression.evaluate()
 

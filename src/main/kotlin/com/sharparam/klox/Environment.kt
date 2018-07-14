@@ -24,7 +24,7 @@ package com.sharparam.klox
 
 import kotlin.repeat
 
-class Environment(private val parent: Environment? = null) {
+class Environment(val parent: Environment? = null) {
     private val env = HashMap<String, Any?>()
 
     operator fun get(key: String): Any? = when {

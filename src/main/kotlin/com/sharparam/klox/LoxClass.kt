@@ -22,7 +22,7 @@
 
 package com.sharparam.klox
 
-class LoxClass(val name: String, private val methods: Map<String, LoxFunction>): LoxCallable {
+class LoxClass(val name: String, val superclass: LoxClass?, private val methods: Map<String, LoxFunction>): LoxCallable {
     override val arity: Int = methods["init"]?.arity ?: 0
 
     override fun invoke(interpreter: Interpreter, arguments: Iterable<Any?>): Any? {
@@ -32,9 +32,10 @@ class LoxClass(val name: String, private val methods: Map<String, LoxFunction>):
         return instance
     }
 
-    fun hasMethod(key: String) = methods.containsKey(key)
+    fun hasMethod(key: String): Boolean = methods.containsKey(key) || (superclass?.hasMethod(key) ?: false)
 
-    fun getMethod(key: String, instance: LoxInstance) = methods[key]?.bind(instance)
+    fun getMethod(key: String, instance: LoxInstance): LoxFunction? =
+            methods[key]?.bind(instance) ?: superclass?.getMethod(key, instance)
 
     override fun toString() = "<class $name>"
 }

@@ -35,6 +35,8 @@ class AstPrinter: Expression.Visitor<String> {
 
     override fun visit(expr: Expression.This) = "this"
 
+    override fun visit(expr: Expression.Super) = "super.${expr.method.lexeme}"
+
     override fun visit(expr: Expression.Binary) = parenthesize(expr.operator.lexeme, expr.left, expr.right)
 
     override fun visit(expr: Expression.Call): String {

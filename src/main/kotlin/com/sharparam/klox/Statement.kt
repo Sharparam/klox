@@ -25,31 +25,34 @@ package com.sharparam.klox
 abstract class Statement {
     abstract fun <T> accept(visitor: Visitor<T>): T
 
-    class Expression(val expression: com.sharparam.klox.Expression): Statement() {
+    class Expression(val expression: com.sharparam.klox.Expression) : Statement() {
         override fun <T> accept(visitor: Visitor<T>) = visitor.visit(this)
     }
 
-    class Class(val name: Token, val methods: Iterable<Function>): Statement() {
+    class Class(
+            val name: Token,
+            val superclass: com.sharparam.klox.Expression.Variable?,
+            val methods: Iterable<Function>) : Statement() {
         override fun <T> accept(visitor: Visitor<T>) = visitor.visit(this)
     }
 
-    class Function(val name: Token, val function: com.sharparam.klox.Expression.Function): Statement() {
+    class Function(val name: Token, val function: com.sharparam.klox.Expression.Function) : Statement() {
         override fun <T> accept(visitor: Visitor<T>) = visitor.visit(this)
     }
 
-    class If(val condition: com.sharparam.klox.Expression, val thenStmt: Statement, val elseStmt: Statement?): Statement() {
+    class If(val condition: com.sharparam.klox.Expression, val thenStmt: Statement, val elseStmt: Statement?) : Statement() {
         override fun <T> accept(visitor: Visitor<T>) = visitor.visit(this)
     }
 
-    class Variable(val name: Token, val initializer: com.sharparam.klox.Expression): Statement() {
+    class Variable(val name: Token, val initializer: com.sharparam.klox.Expression) : Statement() {
         override fun <T> accept(visitor: Visitor<T>) = visitor.visit(this)
     }
 
-    class Return(val keyword: Token, val value: com.sharparam.klox.Expression?): Statement() {
+    class Return(val keyword: Token, val value: com.sharparam.klox.Expression?) : Statement() {
         override fun <T> accept(visitor: Visitor<T>) = visitor.visit(this)
     }
 
-    class While(val condition: com.sharparam.klox.Expression, val body: Statement): Statement() {
+    class While(val condition: com.sharparam.klox.Expression, val body: Statement) : Statement() {
         override fun <T> accept(visitor: Visitor<T>) = visitor.visit(this)
     }
 
@@ -58,19 +61,19 @@ abstract class Statement {
             val condition: com.sharparam.klox.Expression,
             val increment: Statement?,
             val body: Statement
-    ): Statement() {
+    ) : Statement() {
         override fun <T> accept(visitor: Visitor<T>) = visitor.visit(this)
     }
 
-    class Block(val statements: Iterable<Statement>): Statement() {
+    class Block(val statements: Iterable<Statement>) : Statement() {
         override fun <T> accept(visitor: Visitor<T>) = visitor.visit(this)
     }
 
-    class Break: Statement() {
+    class Break : Statement() {
         override fun <T> accept(visitor: Visitor<T>) = visitor.visit(this)
     }
 
-    class Continue: Statement() {
+    class Continue : Statement() {
         override fun <T> accept(visitor: Visitor<T>) = visitor.visit(this)
     }
 

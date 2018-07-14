@@ -36,6 +36,16 @@ class Resolver(private val interpreter: Interpreter, private val errorHandler: E
         expr.target.resolve()
     }
 
+    override fun visit(expr: Expression.Super) {
+        if (currentClassType == ClassType.NONE) {
+            errorHandler.resolveError(expr.keyword, "Cannot use 'super' outside of a class.")
+        } else if (currentClassType == ClassType.CLASS) {
+            errorHandler.resolveError(expr.keyword, "Cannot use 'super' in class with no superclass.")
+        }
+
+        expr.resolveLocal(expr.keyword)
+    }
+
     override fun visit(expr: Expression.Grouping) = expr.expression.resolve()
 
     override fun visit(expr: Expression.Literal) {}
@@ -75,12 +85,19 @@ class Resolver(private val interpreter: Interpreter, private val errorHandler: E
 
     override fun visit(stmt: Statement.Class) {
         stmt.name.declare()
+        stmt.superclass?.resolve()
         stmt.name.define()
 
         log.trace("--- CLASS {} ---", stmt.name.lexeme)
 
         val enclosingClassType = currentClassType
         currentClassType = ClassType.CLASS
+
+        if (stmt.superclass != null) {
+            currentClassType = ClassType.SUBCLASS
+            beginScope()
+            scopes.peek()["super"] = true
+        }
 
         scope {
             it["this"] = true
@@ -90,6 +107,9 @@ class Resolver(private val interpreter: Interpreter, private val errorHandler: E
                 )
             }
         }
+
+        if (stmt.superclass != null)
+            endScope()
 
         currentClassType = enclosingClassType
         log.trace("--- END CLASS {} ---", stmt.name.lexeme)
@@ -224,6 +244,7 @@ class Resolver(private val interpreter: Interpreter, private val errorHandler: E
 
     private enum class ClassType {
         NONE,
-        CLASS
+        CLASS,
+        SUBCLASS
     }
 }
